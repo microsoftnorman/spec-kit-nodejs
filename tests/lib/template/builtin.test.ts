@@ -384,3 +384,305 @@ describe('template content quality', () => {
     expect(content).toMatch(/Phase|Task/i);
   });
 });
+
+describe('command file processing', () => {
+  let tempDir: string;
+
+  beforeEach(() => {
+    tempDir = join(tmpdir(), `cmd-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    mkdirSync(tempDir, { recursive: true });
+  });
+
+  afterEach(() => {
+    if (existsSync(tempDir)) {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  describe('path rewriting', () => {
+    it('rewrites memory/ to .specify/memory/ in command files', async () => {
+      await generateBuiltinTemplates(tempDir, { ai: 'claude' });
+
+      const content = readFileSync(
+        join(tempDir, '.claude', 'commands', 'speckit.plan.md'),
+        'utf-8'
+      );
+      // Should contain .specify/memory/ paths
+      expect(content).toContain('.specify/memory/');
+    });
+
+    it('rewrites templates/ to .specify/templates/ in command files', async () => {
+      await generateBuiltinTemplates(tempDir, { ai: 'claude' });
+
+      const content = readFileSync(
+        join(tempDir, '.claude', 'commands', 'speckit.specify.md'),
+        'utf-8'
+      );
+      // Should contain .specify/templates/ paths
+      expect(content).toContain('.specify/templates/');
+    });
+  });
+
+  describe('placeholder substitution', () => {
+    it('contains npx specify commands in command files', async () => {
+      await generateBuiltinTemplates(tempDir, { ai: 'claude' });
+
+      const content = readFileSync(
+        join(tempDir, '.claude', 'commands', 'speckit.specify.md'),
+        'utf-8'
+      );
+      expect(content).toContain('npx specify');
+    });
+
+    it('replaces __AGENT__ with agent name in plan command', async () => {
+      await generateBuiltinTemplates(tempDir, { ai: 'claude' });
+
+      const content = readFileSync(
+        join(tempDir, '.claude', 'commands', 'speckit.plan.md'),
+        'utf-8'
+      );
+      expect(content).toContain('update-agent-context claude');
+      expect(content).not.toContain('__AGENT__');
+    });
+
+    it('uses $ARGUMENTS for markdown agents', async () => {
+      await generateBuiltinTemplates(tempDir, { ai: 'claude' });
+
+      const content = readFileSync(
+        join(tempDir, '.claude', 'commands', 'speckit.specify.md'),
+        'utf-8'
+      );
+      expect(content).toContain('$ARGUMENTS');
+    });
+
+    it('uses {{args}} for TOML agents', async () => {
+      await generateBuiltinTemplates(tempDir, { ai: 'gemini' });
+
+      const content = readFileSync(
+        join(tempDir, '.gemini', 'commands', 'speckit.specify.toml'),
+        'utf-8'
+      );
+      expect(content).toContain('{{args}}');
+      expect(content).not.toContain('$ARGUMENTS');
+    });
+  });
+
+  describe('frontmatter handling', () => {
+    it('removes scripts section from markdown frontmatter', async () => {
+      await generateBuiltinTemplates(tempDir, { ai: 'claude' });
+
+      const content = readFileSync(
+        join(tempDir, '.claude', 'commands', 'speckit.specify.md'),
+        'utf-8'
+      );
+      expect(content).not.toMatch(/^scripts:\s*$/m);
+      expect(content).not.toContain('sh:');
+      expect(content).not.toContain('ps:');
+    });
+
+    it('removes agent_scripts section from markdown frontmatter', async () => {
+      await generateBuiltinTemplates(tempDir, { ai: 'claude' });
+
+      const content = readFileSync(
+        join(tempDir, '.claude', 'commands', 'speckit.plan.md'),
+        'utf-8'
+      );
+      expect(content).not.toMatch(/^agent_scripts:\s*$/m);
+    });
+
+    it('preserves description in markdown frontmatter', async () => {
+      await generateBuiltinTemplates(tempDir, { ai: 'claude' });
+
+      const content = readFileSync(
+        join(tempDir, '.claude', 'commands', 'speckit.specify.md'),
+        'utf-8'
+      );
+      expect(content).toContain('description:');
+    });
+
+    it('removes frontmatter entirely for TOML format', async () => {
+      await generateBuiltinTemplates(tempDir, { ai: 'gemini' });
+
+      const content = readFileSync(
+        join(tempDir, '.gemini', 'commands', 'speckit.specify.toml'),
+        'utf-8'
+      );
+      // TOML should not have YAML frontmatter delimiters in the prompt
+      const promptMatch = content.match(/prompt = """([\s\S]*?)"""/);
+      expect(promptMatch).toBeTruthy();
+      const promptContent = promptMatch![1];
+      expect(promptContent).not.toMatch(/^---\s*$/m);
+    });
+
+    it('extracts description for TOML format', async () => {
+      await generateBuiltinTemplates(tempDir, { ai: 'gemini' });
+
+      const content = readFileSync(
+        join(tempDir, '.gemini', 'commands', 'speckit.specify.toml'),
+        'utf-8'
+      );
+      expect(content).toMatch(/^description = ".+"/m);
+    });
+  });
+
+  describe('TOML format', () => {
+    it('wraps content in prompt triple quotes', async () => {
+      await generateBuiltinTemplates(tempDir, { ai: 'gemini' });
+
+      const content = readFileSync(
+        join(tempDir, '.gemini', 'commands', 'speckit.specify.toml'),
+        'utf-8'
+      );
+      expect(content).toContain('prompt = """');
+      expect(content).toMatch(/"""$/);
+    });
+
+    it('qwen uses same TOML format as gemini', async () => {
+      await generateBuiltinTemplates(tempDir, { ai: 'qwen' });
+
+      const content = readFileSync(
+        join(tempDir, '.qwen', 'commands', 'speckit.specify.toml'),
+        'utf-8'
+      );
+      expect(content).toContain('description =');
+      expect(content).toContain('prompt = """');
+      expect(content).toContain('{{args}}');
+    });
+  });
+
+  describe('all command files are generated', () => {
+    const expectedCommands = [
+      'analyze',
+      'checklist',
+      'clarify',
+      'constitution',
+      'implement',
+      'plan',
+      'specify',
+      'tasks',
+      'taskstoissues',
+    ];
+
+    it('generates all command files for copilot', async () => {
+      await generateBuiltinTemplates(tempDir, { ai: 'copilot' });
+
+      for (const cmd of expectedCommands) {
+        const filePath = join(tempDir, '.github', 'agents', `speckit.${cmd}.agent.md`);
+        expect(existsSync(filePath), `Missing: speckit.${cmd}.agent.md`).toBe(true);
+      }
+    });
+
+    it('generates all command files for claude', async () => {
+      await generateBuiltinTemplates(tempDir, { ai: 'claude' });
+
+      for (const cmd of expectedCommands) {
+        const filePath = join(tempDir, '.claude', 'commands', `speckit.${cmd}.md`);
+        expect(existsSync(filePath), `Missing: speckit.${cmd}.md`).toBe(true);
+      }
+    });
+
+    it('generates all command files for gemini', async () => {
+      await generateBuiltinTemplates(tempDir, { ai: 'gemini' });
+
+      for (const cmd of expectedCommands) {
+        const filePath = join(tempDir, '.gemini', 'commands', `speckit.${cmd}.toml`);
+        expect(existsSync(filePath), `Missing: speckit.${cmd}.toml`).toBe(true);
+      }
+    });
+
+    it('generates all prompt files for copilot', async () => {
+      await generateBuiltinTemplates(tempDir, { ai: 'copilot' });
+
+      for (const cmd of expectedCommands) {
+        const filePath = join(tempDir, '.github', 'prompts', `speckit.${cmd}.prompt.md`);
+        expect(existsSync(filePath), `Missing: speckit.${cmd}.prompt.md`).toBe(true);
+      }
+    });
+  });
+});
+
+describe('copilot prompt files', () => {
+  let tempDir: string;
+
+  beforeEach(() => {
+    tempDir = join(tmpdir(), `prompt-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    mkdirSync(tempDir, { recursive: true });
+  });
+
+  afterEach(() => {
+    if (existsSync(tempDir)) {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('prompt files have correct agent reference', async () => {
+    await generateBuiltinTemplates(tempDir, { ai: 'copilot' });
+
+    const content = readFileSync(
+      join(tempDir, '.github', 'prompts', 'speckit.specify.prompt.md'),
+      'utf-8'
+    );
+    expect(content).toContain('---');
+    expect(content).toContain('agent: speckit.specify');
+  });
+
+  it('prompt files are only created for copilot', async () => {
+    await generateBuiltinTemplates(tempDir, { ai: 'claude' });
+
+    const promptsDir = join(tempDir, '.github', 'prompts');
+    expect(existsSync(promptsDir)).toBe(false);
+  });
+});
+
+describe('constitution file handling', () => {
+  let tempDir: string;
+
+  beforeEach(() => {
+    tempDir = join(tmpdir(), `const-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    mkdirSync(tempDir, { recursive: true });
+  });
+
+  afterEach(() => {
+    if (existsSync(tempDir)) {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('creates constitution in both memory/ and .specify/memory/', async () => {
+    await generateBuiltinTemplates(tempDir, { ai: 'copilot' });
+
+    expect(existsSync(join(tempDir, 'memory', 'constitution.md'))).toBe(true);
+    expect(existsSync(join(tempDir, '.specify', 'memory', 'constitution.md'))).toBe(true);
+  });
+
+  it('both constitution files have same content', async () => {
+    await generateBuiltinTemplates(tempDir, { ai: 'copilot' });
+
+    const memoryContent = readFileSync(join(tempDir, 'memory', 'constitution.md'), 'utf-8');
+    const specifyContent = readFileSync(join(tempDir, '.specify', 'memory', 'constitution.md'), 'utf-8');
+    expect(memoryContent).toBe(specifyContent);
+  });
+});
+
+describe('unknown agent fallback', () => {
+  let tempDir: string;
+
+  beforeEach(() => {
+    tempDir = join(tmpdir(), `unknown-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    mkdirSync(tempDir, { recursive: true });
+  });
+
+  afterEach(() => {
+    if (existsSync(tempDir)) {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('falls back to copilot config for unknown agent', async () => {
+    await generateBuiltinTemplates(tempDir, { ai: 'unknown-agent' });
+
+    // Should use copilot's directory structure as fallback
+    const agentDir = join(tempDir, '.github', 'agents');
+    expect(existsSync(agentDir)).toBe(true);
+  });
+});
