@@ -8,7 +8,7 @@
 
 | What to Upgrade | Command | When to Use |
 |----------------|---------|-------------|
-| **CLI Tool Only** | `uv tool install specify-cli --force --from git+https://github.com/github/spec-kit.git` | Get latest CLI features without touching project files |
+| **CLI Tool Only** | `npm update -g @specify/cli` | Get latest CLI features without touching project files |
 | **Project Files** | `specify init --here --force --ai <your-agent>` | Update slash commands, templates, and scripts in your project |
 | **Both** | Run CLI upgrade, then project update | Recommended for major version updates |
 
@@ -18,23 +18,26 @@
 
 The CLI tool (`specify`) is separate from your project files. Upgrade it to get the latest features and bug fixes.
 
-### If you installed with `uv tool install`
+### If you installed globally with npm
 
 ```bash
-uv tool install specify-cli --force --from git+https://github.com/github/spec-kit.git
+npm update -g @specify/cli
 ```
 
-### If you use one-shot `uvx` commands
-
-No upgrade needed—`uvx` always fetches the latest version. Just run your commands as normal:
+### If you installed from source
 
 ```bash
-uvx --from git+https://github.com/github/spec-kit.git specify init --here --ai copilot
+cd /path/to/spec-kit-nodejs
+git pull origin main
+npm install
+npm run build
+npm link
 ```
 
 ### Verify the upgrade
 
 ```bash
+specify version
 specify check
 ```
 
@@ -164,8 +167,8 @@ Restart your IDE to refresh the command list.
 ### Scenario 1: "I just want new slash commands"
 
 ```bash
-# Upgrade CLI (if using persistent install)
-uv tool install specify-cli --force --from git+https://github.com/github/spec-kit.git
+# Upgrade CLI
+npm update -g @specify/cli
 
 # Update project files to get new commands
 specify init --here --force --ai copilot
@@ -182,7 +185,7 @@ cp .specify/memory/constitution.md /tmp/constitution-backup.md
 cp -r .specify/templates /tmp/templates-backup
 
 # 2. Upgrade CLI
-uv tool install specify-cli --force --from git+https://github.com/github/spec-kit.git
+npm update -g @specify/cli
 
 # 3. Update project
 specify init --here --force --ai copilot
@@ -363,22 +366,15 @@ Only Spec Kit infrastructure files:
 Verify the installation:
 
 ```bash
-# Check installed tools
-uv tool list
+# Check installed version
+specify version
 
-# Should show specify-cli
+# Check npm global packages
+npm list -g @specify/cli
 
-# Verify path
-which specify
-
-# Should point to the uv tool installation directory
-```
-
-If not found, reinstall:
-
-```bash
-uv tool uninstall specify-cli
-uv tool install specify-cli --from git+https://github.com/github/spec-kit.git
+# If issues persist, reinstall
+npm uninstall -g @specify/cli
+npm install -g @specify/cli
 ```
 
 ### "Do I need to run specify every time I open my project?"
@@ -411,11 +407,6 @@ Once you've run `specify init`, the slash commands (like `/speckit.specify`, `/s
 
 4. **For some agents**, you may need to reload the workspace or clear cache
 
-**Related issue:** If Copilot can't open local files or uses PowerShell commands unexpectedly, this is typically an IDE context issue, not related to `specify`. Try:
-- Restarting VS Code
-- Checking file permissions
-- Ensuring the workspace folder is properly opened
-
 ---
 
 ## Version Compatibility
@@ -431,6 +422,6 @@ Spec Kit follows semantic versioning for major releases. The CLI and project fil
 After upgrading:
 
 - **Test new slash commands:** Run `/speckit.constitution` or another command to verify everything works
-- **Review release notes:** Check [GitHub Releases](https://github.com/github/spec-kit/releases) for new features and breaking changes
+- **Review release notes:** Check [GitHub Releases](https://github.com/github/spec-kit-nodejs/releases) for new features and breaking changes
 - **Update workflows:** If new commands were added, update your team's development workflows
-- **Check documentation:** Visit [github.io/spec-kit](https://github.github.io/spec-kit/) for updated guides
+- **Check documentation:** Visit the docs for updated guides

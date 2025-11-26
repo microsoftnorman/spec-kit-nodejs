@@ -1,244 +1,333 @@
 # Specify CLI Test Suite
 
-This test suite documents the behavior of the Python Specify CLI to enable accurate porting to Node.js.
+This directory contains the test suite for the Specify CLI Node.js implementation.
 
 ## Test Structure
 
 ```
 tests/
-├── __init__.py           # Package init
-├── conftest.py           # Shared fixtures and utilities
-├── pytest.ini            # pytest configuration
-├── README.md             # This file
-├── test_config.py        # Configuration and constants
-├── test_github.py        # GitHub API integration
-├── test_tools.py         # Tool detection
-├── test_template.py      # Template download/extraction
-├── test_git.py           # Git operations
-├── test_ui.py            # UI components
-├── test_commands.py      # CLI commands
-└── test_integration.py   # End-to-end tests
+├── setup.ts                    # Test setup and shared utilities
+├── platform.test.ts            # Platform-specific behavior tests
+├── commands/                   # CLI command tests
+│   ├── check.test.ts           # 'specify check' command
+│   ├── check-prerequisites.test.ts
+│   ├── create-new-feature.test.ts
+│   ├── exit-codes.test.ts      # Exit code behavior
+│   ├── init.test.ts            # 'specify init' command
+│   ├── init-js-script.test.ts  # Init with JS script type
+│   ├── setup-plan.test.ts
+│   ├── update-agent-context.test.ts
+│   └── version.test.ts         # 'specify version' command
+├── lib/                        # Library unit tests
+│   ├── common.test.ts          # Common utilities
+│   ├── config.test.ts          # Configuration constants
+│   ├── errors.test.ts          # Error handling
+│   ├── github/                 # GitHub API tests
+│   │   ├── client.test.ts
+│   │   ├── rate-limit.test.ts
+│   │   ├── tls.test.ts
+│   │   └── token.test.ts
+│   ├── template/               # Template processing tests
+│   │   ├── download.test.ts
+│   │   ├── extract.test.ts
+│   │   ├── merge.test.ts
+│   │   └── permissions.test.ts
+│   ├── tools/                  # Tool detection tests
+│   │   ├── detect.test.ts
+│   │   └── git.test.ts
+│   └── ui/                     # UI component tests
+│       ├── banner.test.ts
+│       ├── select.test.ts
+│       └── tracker.test.ts
+└── e2e/                        # End-to-end tests
+    └── speckit-workflows.test.ts
 ```
 
 ## Running Tests
 
 ### Run All Tests
+
 ```bash
-pytest
+npm test
+```
+
+### Run Tests in Watch Mode
+
+```bash
+npm run test:watch
+```
+
+### Run with Coverage
+
+```bash
+npm run test:coverage
 ```
 
 ### Run Specific Test File
+
 ```bash
-pytest tests/test_config.py
+npm test -- tests/lib/config.test.ts
 ```
 
-### Run Specific Test Class
+### Run Tests Matching a Pattern
+
 ```bash
-pytest tests/test_config.py::TestAgentConfig
+npm test -- --grep "AGENT_CONFIG"
 ```
 
-### Run Specific Test
-```bash
-pytest tests/test_config.py::TestAgentConfig::test_agent_config_has_expected_agents
-```
+### Run Specific Test Suite
 
-### Run with Verbose Output
 ```bash
-pytest -v
-```
-
-### Skip Integration Tests
-```bash
-pytest -m "not integration"
-```
-
-### Skip Network Tests
-```bash
-pytest -m "not network"
-```
-
-### Run Only Fast Tests
-```bash
-pytest -m "not slow and not integration"
+npm test -- tests/commands/
+npm test -- tests/lib/github/
 ```
 
 ## Test Categories
 
-### Unit Tests (Fast, No Network)
-- `test_config.py` - Tests configuration constants
-- `test_tools.py` - Tests tool detection logic
-- `test_ui.py` - Tests UI components
+### Unit Tests (Fast, No I/O)
+
+- `tests/lib/config.test.ts` - Configuration constants and AGENT_CONFIG
+- `tests/lib/errors.test.ts` - Error classes and exit codes
+- `tests/lib/common.test.ts` - Common utility functions
+- `tests/lib/ui/*.test.ts` - UI component rendering
 
 ### Mock-Based Tests
-- `test_github.py` - Tests GitHub API with mocked responses
-- `test_template.py` - Tests template handling with mocked files
-- `test_git.py` - Tests Git operations with mocked subprocess
 
-### Integration Tests (Slow, May Need Network)
-- `test_integration.py` - End-to-end workflow tests
-- `test_commands.py` - Full command execution tests
+- `tests/lib/github/*.test.ts` - GitHub API with mocked fetch
+- `tests/lib/template/*.test.ts` - Template handling with mocked file system
+- `tests/lib/tools/*.test.ts` - Tool detection with mocked execSync
 
-## Key Behaviors Documented
+### Integration Tests
 
-### 1. AGENT_CONFIG Structure
-```python
-AGENT_CONFIG = {
-    "copilot": {
-        "name": "GitHub Copilot",
-        "folder": ".github/",
-        "install_url": None,
-        "requires_cli": False,
-    },
-    # ... more agents
+- `tests/commands/*.test.ts` - Full command execution
+- `tests/e2e/*.test.ts` - End-to-end workflows
+
+## Writing Tests
+
+### Basic Test Structure
+
+```typescript
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+
+describe('MyFeature', () => {
+  beforeEach(() => {
+    // Setup
+  });
+
+  afterEach(() => {
+    // Cleanup
+  });
+
+  it('should do something', () => {
+    const result = myFunction();
+    expect(result).toBe(expected);
+  });
+
+  it('should handle errors', () => {
+    expect(() => myFunction(badInput)).toThrow('Error message');
+  });
+});
+```
+
+### Mocking
+
+```typescript
+import { vi } from 'vitest';
+import * as fs from 'fs-extra';
+
+// Mock a module
+vi.mock('fs-extra');
+
+// Mock a specific function
+vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+
+// Mock environment variables
+const originalEnv = process.env;
+beforeEach(() => {
+  process.env = { ...originalEnv, MY_VAR: 'test' };
+});
+afterEach(() => {
+  process.env = originalEnv;
+});
+```
+
+### Testing Async Code
+
+```typescript
+it('should fetch data', async () => {
+  const result = await fetchData();
+  expect(result).toEqual({ data: 'value' });
+});
+```
+
+### Testing CLI Commands
+
+```typescript
+import { execSync } from 'child_process';
+
+function runCli(args: string): string {
+  return execSync(`node bin/specify.js ${args}`, {
+    encoding: 'utf-8',
+    cwd: projectRoot,
+  });
+}
+
+it('should display help', () => {
+  const output = runCli('--help');
+  expect(output).toContain('Usage:');
+});
+```
+
+## Test Utilities
+
+### Temporary Directories
+
+```typescript
+import { mkdtempSync, rmSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
+
+let tempDir: string;
+
+beforeEach(() => {
+  tempDir = mkdtempSync(join(tmpdir(), 'specify-test-'));
+});
+
+afterEach(() => {
+  rmSync(tempDir, { recursive: true, force: true });
+});
+```
+
+### Environment Mocking
+
+```typescript
+function withEnv(vars: Record<string, string>, fn: () => void) {
+  const original = { ...process.env };
+  Object.assign(process.env, vars);
+  try {
+    fn();
+  } finally {
+    process.env = original;
+  }
 }
 ```
 
+## Key Behaviors Tested
+
+### 1. AGENT_CONFIG Structure
+
+All 15 agents are tested for correct configuration:
+
+- `name`: Human-readable display name
+- `folder`: Directory path
+- `installUrl`: Installation URL (or null)
+- `requiresCli`: CLI requirement flag
+
 ### 2. GitHub Token Resolution
-Priority order:
+
+Priority order tested:
 1. `--github-token` CLI argument
 2. `GH_TOKEN` environment variable
 3. `GITHUB_TOKEN` environment variable
 
 ### 3. Tool Detection
-- Uses `shutil.which()` (equivalent to `which`/`where`)
+
+- Uses `which` (Unix) or `where` (Windows)
 - Special handling for Claude at `~/.claude/local/claude`
 
-### 4. Template Asset Naming
-Pattern: `spec-kit-template-{ai}-{script}-{version}.zip`
+### 4. Template Processing
 
-### 5. VS Code Settings Merge
-`.vscode/settings.json` is deep-merged, not overwritten.
+- ZIP extraction with nested directory handling
+- VS Code settings merge (deep merge, not overwrite)
+- Script permissions on Unix (chmod +x for .sh files)
 
-### 6. Script Permissions (Unix)
-`.sh` files are made executable with chmod.
+### 5. Exit Codes
 
-## Node.js Equivalents
-
-Each test file includes Node.js/TypeScript equivalents in docstrings.
-
-### Example: Tool Detection
-
-**Python:**
-```python
-import shutil
-
-def check_tool(tool):
-    return shutil.which(tool) is not None
-```
-
-**Node.js:**
-```typescript
-import { execSync } from 'child_process';
-
-function checkTool(tool: string): boolean {
-  try {
-    const cmd = process.platform === 'win32' ? `where ${tool}` : `which ${tool}`;
-    execSync(cmd, { stdio: 'ignore' });
-    return true;
-  } catch {
-    return false;
-  }
-}
-```
-
-## Test Markers
-
-| Marker | Description |
-|--------|-------------|
-| `@pytest.mark.integration` | Slow integration tests |
-| `@pytest.mark.network` | Requires network access |
-| `@pytest.mark.slow` | Particularly slow tests |
-| `@pytest.mark.windows` | Windows-only tests |
-| `@pytest.mark.unix` | Unix-only tests |
-
-## Fixtures
-
-### `temp_dir`
-Creates a temporary directory, cleaned up after test.
-
-### `mock_env`
-Temporarily modifies environment variables.
-
-### `project_root`
-Returns the project root directory.
-
-### `sample_release_response`
-Sample GitHub release API response for mocking.
-
-### `sample_rate_limit_headers`
-Sample rate limit headers for testing error handling.
-
-## Writing New Tests
-
-### For the Python CLI
-```python
-def test_my_feature():
-    """
-    Description of what this tests.
-    
-    Node.js equivalent:
-    ```typescript
-    // TypeScript code here
-    ```
-    """
-    # Test implementation
-```
-
-### For the Node.js Port (Vitest)
-```typescript
-import { describe, it, expect } from 'vitest';
-
-describe('MyFeature', () => {
-  it('should do something', () => {
-    // Test implementation
-    expect(result).toBe(expected);
-  });
-});
-```
-
-## Coverage
-
-To run with coverage:
-```bash
-pytest --cov=specify_cli --cov-report=html
-```
-
-View report at `htmlcov/index.html`.
+| Code | Meaning |
+|------|---------|
+| 0 | Success |
+| 1 | General error |
+| 2 | Missing dependency |
+| 3 | Invalid argument |
+| 4 | Network error |
+| 5 | File system error |
 
 ## CI Integration
 
-These tests are designed to run in CI environments:
+Tests run on all platforms in CI:
 
 ```yaml
-# GitHub Actions example
 jobs:
   test:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ['3.9', '3.10', '3.11', '3.12']
+        node-version: [18, 20, 22]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-node@v4
         with:
-          python-version: ${{ matrix.python-version }}
-      - run: pip install -e ".[dev]"
-      - run: pytest -m "not network"
+          node-version: ${{ matrix.node-version }}
+      - run: npm ci
+      - run: npm test
 ```
 
 ## Troubleshooting
 
-### Import Errors
-Ensure the `src` directory is in the Python path:
+### Tests Failing After Code Changes
+
 ```bash
-pip install -e .
-# or
-PYTHONPATH=src pytest
+# Rebuild the project
+npm run build
+
+# Run tests
+npm test
 ```
 
-### Network Tests Failing
-Skip with: `pytest -m "not network"`
+### TypeScript Errors
+
+```bash
+# Check types
+npm run typecheck
+
+# View all errors
+npx tsc --noEmit
+```
 
 ### Platform-Specific Failures
-Tests marked `@pytest.mark.windows` or `@pytest.mark.unix` are automatically skipped on incompatible platforms.
+
+Some tests are platform-specific:
+
+```typescript
+it.skipIf(process.platform === 'win32')('Unix only test', () => {
+  // ...
+});
+
+it.skipIf(process.platform !== 'win32')('Windows only test', () => {
+  // ...
+});
+```
+
+### Debugging Tests
+
+```bash
+# Run with verbose output
+npm test -- --reporter=verbose
+
+# Run single test with debugging
+node --inspect-brk node_modules/vitest/vitest.mjs run tests/lib/config.test.ts
+```
+
+## Coverage
+
+Coverage reports are generated in the `coverage/` directory:
+
+```bash
+npm run test:coverage
+
+# View HTML report
+open coverage/index.html  # macOS
+start coverage/index.html # Windows
+xdg-open coverage/index.html # Linux
+```

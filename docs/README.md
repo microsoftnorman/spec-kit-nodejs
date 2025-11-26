@@ -1,6 +1,10 @@
 # Documentation
 
-This folder contains the documentation source files for Spec Kit, built using [DocFX](https://dotnet.github.io/docfx/).
+This folder contains the documentation source files for Specify CLI (Node.js), built using [DocFX](https://dotnet.github.io/docfx/).
+
+## About This Project
+
+This is the Node.js/TypeScript implementation of GitHub Spec Kit. For the original Python version, see [github/spec-kit](https://github.com/github/spec-kit).
 
 ## Building Locally
 
@@ -26,8 +30,10 @@ To build the documentation locally:
 - `docfx.json` - DocFX configuration file
 - `index.md` - Main documentation homepage
 - `toc.yml` - Table of contents configuration
-- `installation.md` - Installation guide
+- `installation.md` - Installation guide (Node.js/npm)
 - `quickstart.md` - Quick start guide
+- `local-development.md` - Local development guide (Node.js)
+- `upgrade.md` - Upgrade guide (npm)
 - `_site/` - Generated documentation output (ignored by git)
 
 ## Deployment

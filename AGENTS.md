@@ -6,13 +6,17 @@
 
 **Specify CLI** is the command-line interface that bootstraps projects with the Spec Kit framework. It sets up the necessary directory structures, templates, and AI agent integrations to support the Spec-Driven Development workflow.
 
+This is the **Node.js/TypeScript implementation**. For the original Python version, see [github/spec-kit](https://github.com/github/spec-kit).
+
 The toolkit supports multiple AI coding assistants, allowing teams to use their preferred tools while maintaining consistent project structure and development practices.
 
 ---
 
-## General practices
+## General Practices
 
-- Any changes to `__init__.py` for the Specify CLI require a version rev in `pyproject.toml` and addition of entries to `CHANGELOG.md`.
+- Any changes to the CLI require a version bump in `package.json` and addition of entries to `CHANGELOG.md`.
+- Run tests before committing: `npm test`
+- Run linting before committing: `npm run lint`
 
 ## Adding New Agent Support
 
@@ -34,7 +38,7 @@ Specify supports multiple AI agents by generating agent-specific command files a
 | **Claude Code** | `.claude/commands/` | Markdown | `claude` | Anthropic's Claude Code CLI |
 | **Gemini CLI** | `.gemini/commands/` | TOML | `gemini` | Google's Gemini CLI |
 | **GitHub Copilot** | `.github/agents/` | Markdown | N/A (IDE-based) | GitHub Copilot in VS Code |
-| **Cursor** | `.cursor/commands/` | Markdown | `cursor-agent` | Cursor CLI |
+| **Cursor** | `.cursor/commands/` | Markdown | N/A (IDE-based) | Cursor IDE |
 | **Qwen Code** | `.qwen/commands/` | TOML | `qwen` | Alibaba's Qwen Code CLI |
 | **opencode** | `.opencode/command/` | Markdown | `opencode` | opencode CLI |
 | **Codex CLI** | `.codex/commands/` | Markdown | `codex` | Codex CLI |
@@ -55,18 +59,18 @@ Follow these steps to add a new agent (using a hypothetical new agent as an exam
 
 **IMPORTANT**: Use the actual CLI tool name as the key, not a shortened version.
 
-Add the new agent to the `AGENT_CONFIG` dictionary in `src/specify_cli/__init__.py`. This is the **single source of truth** for all agent metadata:
+Add the new agent to the `AGENT_CONFIG` object in `src/lib/config.ts`. This is the **single source of truth** for all agent metadata:
 
-```python
-AGENT_CONFIG = {
-    # ... existing agents ...
-    "new-agent-cli": {  # Use the ACTUAL CLI tool name (what users type in terminal)
-        "name": "New Agent Display Name",
-        "folder": ".newagent/",  # Directory for agent files
-        "install_url": "https://example.com/install",  # URL for installation docs (or None if IDE-based)
-        "requires_cli": True,  # True if CLI tool required, False for IDE-based agents
-    },
-}
+```typescript
+export const AGENT_CONFIG: Record<string, AgentConfig> = {
+  // ... existing agents ...
+  'new-agent-cli': {  // Use the ACTUAL CLI tool name (what users type in terminal)
+    name: 'New Agent Display Name',
+    folder: '.newagent/',  // Directory for agent files
+    installUrl: 'https://example.com/install',  // URL for installation docs (or null if IDE-based)
+    requiresCli: true,  // true if CLI tool required, false for IDE-based agents
+  },
+};
 ```
 
 **Key Design Principle**: The dictionary key should match the actual executable name that users install. For example:
@@ -80,18 +84,25 @@ This eliminates the need for special-case mappings throughout the codebase.
 
 - `name`: Human-readable display name shown to users
 - `folder`: Directory where agent-specific files are stored (relative to project root)
-- `install_url`: Installation documentation URL (set to `None` for IDE-based agents)
-- `requires_cli`: Whether the agent requires a CLI tool check during initialization
+- `installUrl`: Installation documentation URL (set to `null` for IDE-based agents)
+- `requiresCli`: Whether the agent requires a CLI tool check during initialization
 
-#### 2. Update CLI Help Text
+#### 2. Update Agent Lists
 
-Update the `--ai` parameter help text in the `init()` command to include the new agent:
+Update the `ALL_AGENT_KEYS`, `IDE_AGENTS`, and `CLI_AGENTS` arrays in `src/lib/config.ts`:
 
-```python
-ai_assistant: str = typer.Option(None, "--ai", help="AI assistant to use: claude, gemini, copilot, cursor-agent, qwen, opencode, codex, windsurf, kilocode, auggie, codebuddy, new-agent-cli, or q"),
+```typescript
+export const ALL_AGENT_KEYS = [
+  // ... existing agents ...
+  'new-agent-cli',
+] as const;
+
+// Add to IDE_AGENTS if IDE-based, or CLI_AGENTS if CLI-based
+export const CLI_AGENTS = [
+  // ... existing agents ...
+  'new-agent-cli',
+] as const;
 ```
-
-Also update any function docstrings, examples, and error messages that list available agents.
 
 #### 3. Update README Documentation
 
@@ -109,7 +120,7 @@ Modify `.github/workflows/scripts/create-release-packages.sh`:
 ##### Add to ALL_AGENTS array
 
 ```bash
-ALL_AGENTS=(claude gemini copilot cursor-agent qwen opencode windsurf q)
+ALL_AGENTS=(claude gemini copilot cursor-agent qwen opencode windsurf codex kilocode auggie roo codebuddy amp shai q)
 ```
 
 ##### Add case statement for directory structure
@@ -117,32 +128,32 @@ ALL_AGENTS=(claude gemini copilot cursor-agent qwen opencode windsurf q)
 ```bash
 case $agent in
   # ... existing cases ...
-  windsurf)
-    mkdir -p "$base_dir/.windsurf/workflows"
-    generate_commands windsurf md "\$ARGUMENTS" "$base_dir/.windsurf/workflows" "$script" ;;
+  new-agent-cli)
+    mkdir -p "$base_dir/.newagent/commands"
+    generate_commands new-agent-cli md "\$ARGUMENTS" "$base_dir/.newagent/commands" "$script" ;;
 esac
 ```
 
-#### 4. Update GitHub Release Script
+#### 5. Update GitHub Release Script
 
 Modify `.github/workflows/scripts/create-github-release.sh` to include the new agent's packages:
 
 ```bash
 gh release create "$VERSION" \
   # ... existing packages ...
-  .genreleases/spec-kit-template-windsurf-sh-"$VERSION".zip \
-  .genreleases/spec-kit-template-windsurf-ps-"$VERSION".zip \
+  .genreleases/spec-kit-template-new-agent-cli-sh-"$VERSION".zip \
+  .genreleases/spec-kit-template-new-agent-cli-ps-"$VERSION".zip \
   # Add new agent packages here
 ```
 
-#### 5. Update Agent Context Scripts
+#### 6. Update Agent Context Scripts
 
 ##### Bash script (`scripts/bash/update-agent-context.sh`)
 
 Add file variable:
 
 ```bash
-WINDSURF_FILE="$REPO_ROOT/.windsurf/rules/specify-rules.md"
+NEWAGENT_FILE="$REPO_ROOT/.newagent/rules/specify-rules.md"
 ```
 
 Add to case statement:
@@ -150,12 +161,7 @@ Add to case statement:
 ```bash
 case "$AGENT_TYPE" in
   # ... existing cases ...
-  windsurf) update_agent_file "$WINDSURF_FILE" "Windsurf" ;;
-  "") 
-    # ... existing checks ...
-    [ -f "$WINDSURF_FILE" ] && update_agent_file "$WINDSURF_FILE" "Windsurf";
-    # Update default creation condition
-    ;;
+  new-agent-cli) update_agent_file "$NEWAGENT_FILE" "New Agent" ;;
 esac
 ```
 
@@ -164,7 +170,7 @@ esac
 Add file variable:
 
 ```powershell
-$windsurfFile = Join-Path $repoRoot '.windsurf/rules/specify-rules.md'
+$newagentFile = Join-Path $repoRoot '.newagent/rules/specify-rules.md'
 ```
 
 Add to switch statement:
@@ -172,36 +178,11 @@ Add to switch statement:
 ```powershell
 switch ($AgentType) {
     # ... existing cases ...
-    'windsurf' { Update-AgentFile $windsurfFile 'Windsurf' }
-    '' {
-        foreach ($pair in @(
-            # ... existing pairs ...
-            @{file=$windsurfFile; name='Windsurf'}
-        )) {
-            if (Test-Path $pair.file) { Update-AgentFile $pair.file $pair.name }
-        }
-        # Update default creation condition
-    }
+    'new-agent-cli' { Update-AgentFile $newagentFile 'New Agent' }
 }
 ```
 
-#### 6. Update CLI Tool Checks (Optional)
-
-For agents that require CLI tools, add checks in the `check()` command and agent validation:
-
-```python
-# In check() command
-tracker.add("windsurf", "Windsurf IDE (optional)")
-windsurf_ok = check_tool_for_tracker("windsurf", "https://windsurf.com/", tracker)
-
-# In init validation (only if CLI tool required)
-elif selected_ai == "windsurf":
-    if not check_tool("windsurf", "Install from: https://windsurf.com/"):
-        console.print("[red]Error:[/red] Windsurf CLI is required for Windsurf projects")
-        agent_tool_missing = True
-```
-
-**Note**: CLI tool checks are now handled automatically based on the `requires_cli` field in AGENT_CONFIG. No additional code changes needed in the `check()` or `init()` commands - they automatically loop through AGENT_CONFIG and check tools as needed.
+**Note**: CLI tool checks are handled automatically based on the `requiresCli` field in AGENT_CONFIG. No additional code changes needed in the `check` or `init` commands - they automatically loop through AGENT_CONFIG and check tools as needed.
 
 ## Important Design Decisions
 
@@ -211,7 +192,7 @@ elif selected_ai == "windsurf":
 
 **Why this matters:**
 
-- The `check_tool()` function uses `shutil.which(tool)` to find executables in the system PATH
+- The `checkTool()` function uses `which` (Unix) or `where` (Windows) to find executables in the system PATH
 - If the key doesn't match the actual CLI tool name, you'll need special-case mappings throughout the codebase
 - This creates unnecessary complexity and maintenance burden
 
@@ -219,31 +200,32 @@ elif selected_ai == "windsurf":
 
 ❌ **Wrong approach** (requires special-case mapping):
 
-```python
-AGENT_CONFIG = {
-    "cursor": {  # Shorthand that doesn't match the actual tool
-        "name": "Cursor",
-        # ...
-    }
-}
+```typescript
+export const AGENT_CONFIG = {
+  cursor: {  // Shorthand that doesn't match the actual tool
+    name: 'Cursor',
+    // ...
+  },
+};
 
-# Then you need special cases everywhere:
-cli_tool = agent_key
-if agent_key == "cursor":
-    cli_tool = "cursor-agent"  # Map to the real tool name
+// Then you need special cases everywhere:
+let cliTool = agentKey;
+if (agentKey === 'cursor') {
+  cliTool = 'cursor-agent';  // Map to the real tool name
+}
 ```
 
 ✅ **Correct approach** (no mapping needed):
 
-```python
-AGENT_CONFIG = {
-    "cursor-agent": {  # Matches the actual executable name
-        "name": "Cursor",
-        # ...
-    }
-}
+```typescript
+export const AGENT_CONFIG = {
+  'cursor-agent': {  // Matches the actual executable name
+    name: 'Cursor',
+    // ...
+  },
+};
 
-# No special cases needed - just use agent_key directly!
+// No special cases needed - just use agentKey directly!
 ```
 
 **Benefits of this approach:**
@@ -285,10 +267,8 @@ For agents that require CLI tools, add installation commands to `.devcontainer/p
 # Existing installations...
 
 echo -e "\n🤖 Installing [New Agent Name] CLI..."
-# run_command "npm install -g [agent-cli-package]@latest" # Example for node-based CLI
-# or other installation instructions (must be non-interactive and compatible with Linux Debian "Trixie" or later)...
+# npm install -g [agent-cli-package]@latest  # Example for npm-based CLI
 echo "✅ Done"
-
 ```
 
 **Quick Tips:**
@@ -305,12 +285,13 @@ echo "✅ Done"
 Require a command-line tool to be installed:
 
 - **Claude Code**: `claude` CLI
-- **Gemini CLI**: `gemini` CLI  
-- **Cursor**: `cursor-agent` CLI
+- **Gemini CLI**: `gemini` CLI
 - **Qwen Code**: `qwen` CLI
 - **opencode**: `opencode` CLI
-- **Amazon Q Developer CLI**: `q` CLI
+- **Codex CLI**: `codex` CLI
+- **Auggie CLI**: `auggie` CLI
 - **CodeBuddy CLI**: `codebuddy` CLI
+- **Amazon Q Developer CLI**: `q` CLI
 - **Amp**: `amp` CLI
 - **SHAI**: `shai` CLI
 
@@ -319,7 +300,10 @@ Require a command-line tool to be installed:
 Work within integrated development environments:
 
 - **GitHub Copilot**: Built into VS Code/compatible editors
+- **Cursor**: Built into Cursor IDE
 - **Windsurf**: Built into Windsurf IDE
+- **Kilo Code**: Built into Kilo Code IDE
+- **Roo Code**: Built into Roo Code IDE
 
 ## Command File Formats
 
@@ -379,20 +363,22 @@ Different agents use different argument placeholders:
 
 ## Testing New Agent Integration
 
-1. **Build test**: Run package creation script locally
-2. **CLI test**: Test `specify init --ai <agent>` command
-3. **File generation**: Verify correct directory structure and files
-4. **Command validation**: Ensure generated commands work with the agent
-5. **Context update**: Test agent context update scripts
+1. **Build test**: `npm run build` - ensure TypeScript compiles
+2. **Unit tests**: `npm test` - all tests should pass
+3. **CLI test**: `npm run dev -- init my-project --ai <agent>` - test initialization
+4. **File generation**: Verify correct directory structure and files
+5. **Command validation**: Ensure generated commands work with the agent
+6. **Context update**: Test agent context update scripts
 
 ## Common Pitfalls
 
 1. **Using shorthand keys instead of actual CLI tool names**: Always use the actual executable name as the AGENT_CONFIG key (e.g., `"cursor-agent"` not `"cursor"`). This prevents the need for special-case mappings throughout the codebase.
-2. **Forgetting update scripts**: Both bash and PowerShell scripts must be updated when adding new agents.
-3. **Incorrect `requires_cli` value**: Set to `True` only for agents that actually have CLI tools to check; set to `False` for IDE-based agents.
-4. **Wrong argument format**: Use correct placeholder format for each agent type (`$ARGUMENTS` for Markdown, `{{args}}` for TOML).
-5. **Directory naming**: Follow agent-specific conventions exactly (check existing agents for patterns).
-6. **Help text inconsistency**: Update all user-facing text consistently (help strings, docstrings, README, error messages).
+2. **Forgetting to update agent lists**: Update `ALL_AGENT_KEYS`, `IDE_AGENTS`, or `CLI_AGENTS` in `src/lib/config.ts`.
+3. **Forgetting update scripts**: Both bash and PowerShell scripts must be updated when adding new agents.
+4. **Incorrect `requiresCli` value**: Set to `true` only for agents that actually have CLI tools to check; set to `false` for IDE-based agents.
+5. **Wrong argument format**: Use correct placeholder format for each agent type (`$ARGUMENTS` for Markdown, `{{args}}` for TOML).
+6. **Directory naming**: Follow agent-specific conventions exactly (check existing agents for patterns).
+7. **Help text inconsistency**: Update all user-facing text consistently (help strings, README, error messages).
 
 ## Future Considerations
 
