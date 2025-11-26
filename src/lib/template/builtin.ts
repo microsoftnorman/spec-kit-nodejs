@@ -15,12 +15,18 @@ const __dirname = dirname(__filename);
 
 /**
  * Get the path to the templates directory in the source repo.
- * This walks up from the dist folder to find the templates.
+ * This walks up from the dist folder to find the assets/templates directory.
  */
 function getTemplatesDir(): string {
-  // From dist/lib/template -> nodejs -> spec-kit-nodejs -> templates
+  // From dist/lib/template -> look for assets/templates in project root
   let dir = __dirname;
   for (let i = 0; i < 5; i++) {
+    // Check for assets/templates (the actual location)
+    const assetsTemplatesPath = join(dir, 'assets', 'templates');
+    if (existsSync(assetsTemplatesPath)) {
+      return assetsTemplatesPath;
+    }
+    // Also check for templates/ for backwards compatibility
     const templatesPath = join(dir, 'templates');
     if (existsSync(templatesPath)) {
       return templatesPath;
