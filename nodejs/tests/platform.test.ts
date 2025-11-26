@@ -22,33 +22,6 @@ describe('Platform Compatibility', () => {
     vi.restoreAllMocks();
   });
 
-  describe('getDefaultScriptType', () => {
-    it('should return ps on Windows', async () => {
-      vi.mocked(platform).mockReturnValue('win32');
-      
-      // Re-import to get fresh module with mocked platform
-      const { getDefaultScriptType } = await import('../src/lib/config.js');
-      
-      // Note: This test may not work perfectly due to module caching
-      // In real scenarios, getDefaultScriptType uses process.platform directly
-      expect(['sh', 'ps']).toContain(getDefaultScriptType());
-    });
-
-    it('should return sh on macOS', async () => {
-      vi.mocked(platform).mockReturnValue('darwin');
-      
-      const { getDefaultScriptType } = await import('../src/lib/config.js');
-      expect(['sh', 'ps']).toContain(getDefaultScriptType());
-    });
-
-    it('should return sh on Linux', async () => {
-      vi.mocked(platform).mockReturnValue('linux');
-      
-      const { getDefaultScriptType } = await import('../src/lib/config.js');
-      expect(['sh', 'ps']).toContain(getDefaultScriptType());
-    });
-  });
-
   describe('isWindows detection', () => {
     it('should detect Windows correctly', async () => {
       const { isWindows } = await import('../src/lib/template/permissions.js');

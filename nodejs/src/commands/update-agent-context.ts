@@ -616,7 +616,7 @@ export async function updateAgentContext(
     process.exit(1);
   }
 
-  const templateFile = join(paths.repoRoot, '.specify', 'templates', 'agent-file-template.md');
+  const templateFile = join(paths.repoRoot, '.speckit', 'templates', 'agent-file-template.md');
   if (!existsSync(templateFile)) {
     logWarning(`Template file not found at ${templateFile}`);
     logWarning('Creating new agent files will fail');

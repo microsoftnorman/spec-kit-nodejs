@@ -87,9 +87,9 @@ describe('Check Output Format', () => {
 
 describe('Check Completion Message', () => {
   it('ready message text', () => {
-    const readyMessage = 'Specify CLI is ready to use!';
+    const readyMessage = 'Speckit CLI is ready to use!';
     expect(readyMessage).toContain('ready');
-    expect(readyMessage).toContain('Specify');
+    expect(readyMessage).toContain('Speckit');
   });
 });
 

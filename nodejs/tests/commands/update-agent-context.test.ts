@@ -205,7 +205,7 @@ describe('UpdateAgentContext File Updates', () => {
   });
 
   it('creates new agent file from template', () => {
-    const templateDir = join(tempDir, '.specify', 'templates');
+    const templateDir = join(tempDir, '.speckit', 'templates');
     mkdirSync(templateDir, { recursive: true });
 
     const templateContent = '# Agent Context\n\n## Active Technologies\n[EXTRACTED FROM ALL PLAN.MD FILES]\n';

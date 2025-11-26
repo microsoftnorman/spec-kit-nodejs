@@ -1,6 +1,6 @@
-# Specify CLI - Node.js Port
+# Speckit CLI - Node.js Port
 
-This directory contains the Node.js/TypeScript port of the Specify CLI.
+This directory contains the Node.js/TypeScript port of the Speckit CLI.
 
 ## Overview
 
@@ -12,22 +12,21 @@ The original Python implementation is in `../src/specify_cli/`. This port provid
 
 ### Implemented Features
 
-- ✅ **Configuration**: AGENT_CONFIG (15 agents), SCRIPT_TYPE_CHOICES, CLAUDE_LOCAL_PATH
+- ✅ **Configuration**: AGENT_CONFIG (15 agents), CLAUDE_LOCAL_PATH
 - ✅ **GitHub Integration**: Token handling, rate limit parsing/formatting, API client
 - ✅ **UI Components**: StepTracker, ASCII banner, console utilities, interactive selection
 - ✅ **Template Processing**: Deep merge JSON files, download, extraction
 - ✅ **Tool Detection**: Check for CLI tools (git, claude, code, etc.)
 - ✅ **Git Operations**: Detect git repos, initialize with commit
 - ✅ **CLI Commands**: `check`, `version`, `init` (fully functional)
-- ✅ **Script Permissions**: Set chmod on Unix .sh files
 - ✅ **Error Handling**: Structured error classes with exit codes
-- ✅ **Interactive Selection**: Arrow key navigation for AI and script type
+- ✅ **Interactive Selection**: Arrow key navigation for AI assistant
 
 ### Fully Working Commands
 
-- `specify check` - Check for required tools
-- `specify version` - Show version and system info
-- `specify init <project-name>` - Initialize a new Specify project
+- `speckit check` - Check for required tools
+- `speckit version` - Show version and system info
+- `speckit init <project-name>` - Initialize a new Speckit project
 
 ## Getting Started
 
@@ -45,26 +44,26 @@ npm test
 npx . --help
 npx . check
 npx . version
-npx . init my-project --ai copilot --script sh --no-git
+npx . init my-project --ai copilot --no-git
 ```
 
 ## Usage Examples
 
 ```bash
-# Initialize a new project with GitHub Copilot (shell scripts)
-specify init my-project --ai copilot --script sh
+# Initialize a new project with GitHub Copilot
+speckit init my-project --ai copilot
 
 # Initialize in current directory
-specify init --here --ai claude
+speckit init --here --ai claude
 
 # Force overwrite non-empty directory
-specify init my-project --ai gemini --force
+speckit init my-project --ai gemini --force
 
 # Skip git initialization
-specify init my-project --ai copilot --no-git
+speckit init my-project --ai copilot --no-git
 
 # Use a custom GitHub token
-specify init my-project --ai copilot --github-token ghp_xxx
+speckit init my-project --ai copilot --github-token ghp_xxx
 ```
 
 ## Project Structure

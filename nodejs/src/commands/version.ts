@@ -35,7 +35,7 @@ async function getLatestTemplateVersion(githubToken?: string): Promise<string | 
   try {
     const headers: Record<string, string> = {
       Accept: 'application/vnd.github+json',
-      'User-Agent': 'specify-cli',
+      'User-Agent': 'speckit-cli',
       ...getAuthHeaders(githubToken),
     };
 

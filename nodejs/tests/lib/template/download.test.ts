@@ -41,17 +41,17 @@ describe('Template Download API', () => {
 });
 
 describe('Asset Name Pattern', () => {
-  it('pattern format matches spec-kit-template-{ai}-{script}-{version}.zip', () => {
-    const pattern = getAssetNamePattern('copilot', 'sh');
-    expect(pattern.test('spec-kit-template-copilot-sh-0.0.22.zip')).toBe(true);
-    expect(pattern.test('spec-kit-template-copilot-sh-1.0.0.zip')).toBe(true);
+  it('pattern format matches spec-kit-template-{ai}-{version}.zip', () => {
+    const pattern = getAssetNamePattern('copilot');
+    expect(pattern.test('spec-kit-template-copilot-0.0.22.zip')).toBe(true);
+    expect(pattern.test('spec-kit-template-copilot-1.0.0.zip')).toBe(true);
   });
 
   it('pattern examples for valid asset names', () => {
     const validPatterns = [
-      'spec-kit-template-copilot-sh-0.0.22.zip',
-      'spec-kit-template-claude-ps-0.0.22.zip',
-      'spec-kit-template-gemini-sh-1.0.0.zip',
+      'spec-kit-template-copilot-0.0.22.zip',
+      'spec-kit-template-claude-0.0.22.zip',
+      'spec-kit-template-gemini-1.0.0.zip',
     ];
 
     for (const pattern of validPatterns) {
@@ -61,20 +61,20 @@ describe('Asset Name Pattern', () => {
     }
   });
 
-  it('finds matching asset for ai_assistant and script_type', () => {
+  it('finds matching asset for ai_assistant', () => {
     const release: GitHubRelease = {
       tag_name: 'v0.0.22',
       name: 'Release 0.0.22',
       published_at: '2024-01-01T00:00:00Z',
       assets: [
-        { name: 'spec-kit-template-copilot-sh-0.0.22.zip', size: 1000, browser_download_url: 'https://example.com/1' },
-        { name: 'spec-kit-template-claude-ps-0.0.22.zip', size: 2000, browser_download_url: 'https://example.com/2' },
+        { name: 'spec-kit-template-copilot-0.0.22.zip', size: 1000, browser_download_url: 'https://example.com/1' },
+        { name: 'spec-kit-template-claude-0.0.22.zip', size: 2000, browser_download_url: 'https://example.com/2' },
       ],
     };
 
-    const asset = findMatchingAsset(release, 'copilot', 'sh');
+    const asset = findMatchingAsset(release, 'copilot');
     expect(asset).not.toBeNull();
-    expect(asset?.name).toBe('spec-kit-template-copilot-sh-0.0.22.zip');
+    expect(asset?.name).toBe('spec-kit-template-copilot-0.0.22.zip');
   });
 
   it('returns null when no match found', () => {
@@ -83,11 +83,11 @@ describe('Asset Name Pattern', () => {
       name: 'Release 0.0.22',
       published_at: '2024-01-01T00:00:00Z',
       assets: [
-        { name: 'spec-kit-template-copilot-sh-0.0.22.zip', size: 1000, browser_download_url: 'https://example.com/1' },
+        { name: 'spec-kit-template-copilot-0.0.22.zip', size: 1000, browser_download_url: 'https://example.com/1' },
       ],
     };
 
-    const asset = findMatchingAsset(release, 'claude', 'ps');
+    const asset = findMatchingAsset(release, 'claude');
     expect(asset).toBeNull();
   });
 
@@ -97,16 +97,16 @@ describe('Asset Name Pattern', () => {
       name: 'Release 0.0.22',
       published_at: '2024-01-01T00:00:00Z',
       assets: [
-        { name: 'spec-kit-template-copilot-sh-0.0.22.zip', size: 1000, browser_download_url: 'https://example.com/1' },
-        { name: 'spec-kit-template-claude-ps-0.0.22.zip', size: 2000, browser_download_url: 'https://example.com/2' },
+        { name: 'spec-kit-template-copilot-0.0.22.zip', size: 1000, browser_download_url: 'https://example.com/1' },
+        { name: 'spec-kit-template-claude-0.0.22.zip', size: 2000, browser_download_url: 'https://example.com/2' },
         { name: 'other-file.txt', size: 100, browser_download_url: 'https://example.com/3' },
       ],
     };
 
     const available = getAvailableAssets(release);
     expect(available).toHaveLength(2);
-    expect(available).toContain('spec-kit-template-copilot-sh-0.0.22.zip');
-    expect(available).toContain('spec-kit-template-claude-ps-0.0.22.zip');
+    expect(available).toContain('spec-kit-template-copilot-0.0.22.zip');
+    expect(available).toContain('spec-kit-template-claude-0.0.22.zip');
     expect(available).not.toContain('other-file.txt');
   });
 });
@@ -141,13 +141,13 @@ describe('Download Progress', () => {
 
 describe('Asset Validation', () => {
   it('validates valid asset names', () => {
-    expect(isValidAssetName('spec-kit-template-copilot-sh-0.0.22.zip')).toBe(true);
-    expect(isValidAssetName('spec-kit-template-claude-ps-1.0.0.zip')).toBe(true);
+    expect(isValidAssetName('spec-kit-template-copilot-0.0.22.zip')).toBe(true);
+    expect(isValidAssetName('spec-kit-template-claude-1.0.0.zip')).toBe(true);
   });
 
   it('rejects invalid asset names', () => {
     expect(isValidAssetName('other-file.txt')).toBe(false);
-    expect(isValidAssetName('spec-kit-template-copilot-sh')).toBe(false);
-    expect(isValidAssetName('template-copilot-sh-0.0.22.zip')).toBe(false);
+    expect(isValidAssetName('spec-kit-template-copilot')).toBe(false);
+    expect(isValidAssetName('template-copilot-0.0.22.zip')).toBe(false);
   });
 });

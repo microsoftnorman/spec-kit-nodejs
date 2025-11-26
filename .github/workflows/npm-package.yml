@@ -1,0 +1,109 @@
+name: Node.js Package
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'nodejs/**'
+      - '.github/workflows/npm-package.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'nodejs/**'
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish to GitHub Packages'
+        required: false
+        default: false
+        type: boolean
+
+defaults:
+  run:
+    working-directory: nodejs
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: nodejs/package-lock.json
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run type check
+        run: npm run typecheck
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build package
+        run: npm run build
+
+      - name: Pack npm package
+        run: npm pack
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: speckit-cli-npm-package
+          path: nodejs/*.tgz
+          retention-days: 30
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event.inputs.publish == 'true'
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js for GitHub Packages
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@${{ github.repository_owner }}'
+          cache: 'npm'
+          cache-dependency-path: nodejs/package-lock.json
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build package
+        run: npm run build
+
+      - name: Configure package for GitHub Packages
+        run: |
+          # Update package name to use GitHub org scope and set version based on run number
+          node -e "
+            const pkg = require('./package.json');
+            pkg.name = '@${{ github.repository_owner }}/speckit-cli';
+            pkg.version = '0.0.${{ github.run_number }}';
+            pkg.repository = {
+              type: 'git',
+              url: 'git+https://github.com/${{ github.repository }}.git'
+            };
+            pkg.publishConfig = {
+              registry: 'https://npm.pkg.github.com'
+            };
+            require('fs').writeFileSync('./package.json', JSON.stringify(pkg, null, 2) + '\n');
+          "
+
+      - name: Publish to GitHub Packages
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -97,7 +97,7 @@ describe('Extract Nested Structure', () => {
       // Create nested structure
       const rootDir = join(tempDir, 'spec-kit-template-0.0.22');
       mkdirSync(rootDir);
-      mkdirSync(join(rootDir, '.specify'));
+      mkdirSync(join(rootDir, '.speckit'));
       mkdirSync(join(rootDir, '.github'));
       writeFileSync(join(rootDir, 'README.md'), '# Test');
 
@@ -106,7 +106,7 @@ describe('Extract Nested Structure', () => {
 
       // Check result
       const entries = readdirSync(tempDir);
-      expect(entries).toContain('.specify');
+      expect(entries).toContain('.speckit');
       expect(entries).toContain('.github');
       expect(entries).toContain('README.md');
       expect(entries).not.toContain('spec-kit-template-0.0.22');

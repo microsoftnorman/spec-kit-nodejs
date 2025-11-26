@@ -58,8 +58,8 @@ describe('Version Output Format', () => {
   });
 
   it('panel title concept', () => {
-    const title = 'Specify CLI Information';
-    expect(title).toContain('Specify');
+    const title = 'Speckit CLI Information';
+    expect(title).toContain('Speckit');
     expect(title).toContain('CLI');
   });
 });

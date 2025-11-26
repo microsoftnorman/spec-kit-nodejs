@@ -1,13 +1,18 @@
 {
-  "name": "@specify/cli",
+  "name": "@speckit/cli",
   "version": "0.0.1",
-  "description": "Specify CLI - GitHub Spec Kit for Spec-Driven Development",
+  "description": "Speckit CLI - GitHub Spec Kit for Spec-Driven Development",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "specify": "./bin/specify.js"
+    "speckit": "./bin/speckit.js"
   },
+  "files": [
+    "dist",
+    "bin",
+    "assets"
+  ],
   "engines": {
     "node": ">=18.0.0"
   },

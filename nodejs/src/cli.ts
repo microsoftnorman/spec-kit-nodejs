@@ -33,15 +33,14 @@ try {
 const program = new Command();
 
 program
-  .name('specify')
-  .description('Setup tool for Specify spec-driven development projects')
+  .name('speckit')
+  .description('Setup tool for Speckit spec-driven development projects')
   .version(packageVersion);
 
 program
   .command('init [project-name]')
-  .description('Initialize a new Specify project from the latest template')
+  .description('Initialize a new Speckit project from the latest template')
   .option('--ai <assistant>', 'AI assistant to use: claude, gemini, copilot, cursor-agent, qwen, opencode, codex, windsurf, kilocode, auggie, codebuddy, roo, q, amp, or shai')
-  .option('--script <type>', 'Script type: sh or ps')
   .option('--ignore-agent-tools', 'Skip checks for AI agent CLI tools')
   .option('--no-git', 'Skip git repository initialization')
   .option('--here', 'Initialize in current directory')
@@ -92,7 +91,7 @@ program
 // Show banner when no command provided
 if (process.argv.length <= 2) {
   showBanner();
-  console.log("Run 'specify --help' for usage information\n");
+  console.log("Run 'speckit --help' for usage information\n");
 } else {
   program.parse();
 }

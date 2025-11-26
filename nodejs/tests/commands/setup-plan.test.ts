@@ -62,7 +62,7 @@ describe('SetupPlan Behavior', () => {
   });
 
   it('copies plan template to feature directory', () => {
-    const templateDir = join(tempDir, '.specify', 'templates');
+    const templateDir = join(tempDir, '.speckit', 'templates');
     const featureDir = join(tempDir, 'specs', '001-test-feature');
 
     mkdirSync(templateDir, { recursive: true });
@@ -90,9 +90,9 @@ describe('SetupPlan Template', () => {
     expect(templateName).toBe('plan-template.md');
   });
 
-  it('template path is under .specify/templates/', () => {
-    const templatePath = '.specify/templates/plan-template.md';
-    expect(templatePath).toContain('.specify/templates/');
+  it('template path is under .speckit/templates/', () => {
+    const templatePath = '.speckit/templates/plan-template.md';
+    expect(templatePath).toContain('.speckit/templates/');
   });
 });
 

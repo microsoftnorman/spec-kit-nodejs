@@ -6,11 +6,9 @@
 // Export configuration
 export {
   AGENT_CONFIG,
-  SCRIPT_TYPE_CHOICES,
   BANNER,
   TAGLINE,
   CLAUDE_LOCAL_PATH,
-  getDefaultScriptType,
 } from './lib/config.js';
 
 // Export GitHub utilities

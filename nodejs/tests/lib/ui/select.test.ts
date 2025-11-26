@@ -4,17 +4,14 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { platform } from 'node:os';
 import {
   getKeyAction,
   formatOption,
   NAVIGATION_HELP,
   getAIChoices,
-  getScriptChoices,
   DEFAULT_AI_KEY,
-  getDefaultScriptKey,
 } from '../../../src/lib/ui/select.js';
-import { AGENT_CONFIG, SCRIPT_TYPE_CHOICES } from '../../../src/lib/config.js';
+import { AGENT_CONFIG } from '../../../src/lib/config.js';
 
 describe('Get Key Behavior', () => {
   it('up arrow returns up', () => {
@@ -100,15 +97,6 @@ describe('Select With Arrows Defaults', () => {
   it('default AI key is copilot', () => {
     expect(DEFAULT_AI_KEY).toBe('copilot');
   });
-
-  it('default script key is OS dependent', () => {
-    const defaultKey = getDefaultScriptKey();
-    if (platform() === 'win32') {
-      expect(defaultKey).toBe('ps');
-    } else {
-      expect(defaultKey).toBe('sh');
-    }
-  });
 });
 
 describe('Select With Arrows Used For', () => {
@@ -123,20 +111,6 @@ describe('Select With Arrows Used For', () => {
     expect(DEFAULT_AI_KEY).toBe('copilot');
     expect(AGENT_CONFIG['copilot']).toBeDefined();
   });
-
-  it('script selection uses SCRIPT_TYPE_CHOICES', () => {
-    const scriptChoices = getScriptChoices();
-    expect(Object.keys(scriptChoices)).toHaveLength(3);
-    expect(scriptChoices['sh']).toBe('POSIX Shell (bash/zsh)');
-    expect(scriptChoices['ps']).toBe('PowerShell');
-    expect(scriptChoices['js']).toBe('JavaScript (Node.js)');
-  });
-
-  it('script selection default depends on OS', () => {
-    const defaultScript = getDefaultScriptKey();
-    expect(['sh', 'ps']).toContain(defaultScript);
-    expect(SCRIPT_TYPE_CHOICES[defaultScript]).toBeDefined();
-  });
 });
 
 describe('Select Options Structure', () => {
@@ -147,11 +121,5 @@ describe('Select Options Structure', () => {
       expect(typeof name).toBe('string');
       expect(name.length).toBeGreaterThan(0);
     }
-  });
-
-  it('script choices are complete', () => {
-    const scriptChoices = getScriptChoices();
-    expect(scriptChoices['sh']).toBe('POSIX Shell (bash/zsh)');
-    expect(scriptChoices['ps']).toBe('PowerShell');
   });
 });

@@ -56,7 +56,7 @@ export async function setupPlan(options: SetupPlanOptions): Promise<void> {
   }
 
   // Copy plan template if it exists
-  const templatePath = join(paths.repoRoot, '.specify', 'templates', 'plan-template.md');
+  const templatePath = join(paths.repoRoot, '.speckit', 'templates', 'plan-template.md');
 
   if (existsSync(templatePath)) {
     copyFileSync(templatePath, paths.implPlan);

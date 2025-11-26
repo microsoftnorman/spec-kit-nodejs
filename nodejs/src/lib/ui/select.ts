@@ -2,7 +2,7 @@
  * Interactive selection module - arrow key navigable selection menu.
  */
 
-import { AGENT_CONFIG, SCRIPT_TYPE_CHOICES, getDefaultScriptType } from '../config.js';
+import { AGENT_CONFIG } from '../config.js';
 
 /**
  * Key mappings from keyboard input.
@@ -61,23 +61,9 @@ export function getAIChoices(): Record<string, string> {
 }
 
 /**
- * Get script type choices.
- */
-export function getScriptChoices(): Record<string, string> {
-  return { ...SCRIPT_TYPE_CHOICES };
-}
-
-/**
  * Default AI selection key.
  */
 export const DEFAULT_AI_KEY = 'copilot';
-
-/**
- * Get default script type based on OS.
- */
-export function getDefaultScriptKey(): 'sh' | 'ps' {
-  return getDefaultScriptType();
-}
 
 /**
  * Interactive selection with arrow key navigation.

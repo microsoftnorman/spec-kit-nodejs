@@ -57,7 +57,7 @@ export async function fetchLatestRelease(
   
   const headers: Record<string, string> = {
     Accept: 'application/vnd.github.v3+json',
-    'User-Agent': 'specify-cli/nodejs',
+    'User-Agent': 'speckit-cli/nodejs',
     ...getAuthHeaders(options?.token),
   };
 

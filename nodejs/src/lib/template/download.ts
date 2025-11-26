@@ -17,11 +17,11 @@ export const STREAM_TIMEOUT = 60; // 60 seconds for streaming download
 export const CHUNK_SIZE = 8192; // 8KB chunks
 
 /**
- * Asset naming pattern: spec-kit-template-{ai}-{script}-{version}.zip
+ * Asset naming pattern: spec-kit-template-{ai}-{version}.zip
  * Version may or may not have 'v' prefix
  */
-export function getAssetNamePattern(ai: string, script: string): RegExp {
-  return new RegExp(`^spec-kit-template-${ai}-${script}-v?[\\d.]+\\.zip$`);
+export function getAssetNamePattern(ai: string): RegExp {
+  return new RegExp(`^spec-kit-template-${ai}-v?[\\d.]+\\.zip$`);
 }
 
 /**
@@ -84,10 +84,9 @@ export interface GitHubRelease {
  */
 export function findMatchingAsset(
   release: GitHubRelease,
-  ai: string,
-  script: string
+  ai: string
 ): ReleaseAsset | null {
-  const pattern = getAssetNamePattern(ai, script);
+  const pattern = getAssetNamePattern(ai);
   return release.assets.find(asset => pattern.test(asset.name)) ?? null;
 }
 
@@ -111,7 +110,7 @@ export async function fetchLatestRelease(options?: {
   const response = await fetch(API_URL, {
     headers: {
       Accept: 'application/vnd.github+json',
-      'User-Agent': 'specify-cli',
+      'User-Agent': 'speckit-cli',
       ...headers,
     },
   });
@@ -130,14 +129,12 @@ export async function fetchLatestRelease(options?: {
  * Download a template from GitHub releases.
  * 
  * @param ai - AI assistant type (e.g., 'copilot', 'claude')
- * @param script - Script type ('sh' or 'ps')
  * @param destDir - Destination directory for download
  * @param options - Download options
  * @returns Download result with zip path and metadata
  */
 export async function downloadTemplate(
   ai: string,
-  script: string,
   destDir: string,
   options?: DownloadOptions
 ): Promise<DownloadResult> {
@@ -149,11 +146,11 @@ export async function downloadTemplate(
   tracker?.complete('fetch', `Found release ${release.tag_name}`);
 
   // Find matching asset
-  const asset = findMatchingAsset(release, ai, script);
+  const asset = findMatchingAsset(release, ai);
   if (!asset) {
     const available = getAvailableAssets(release);
     throw new Error(
-      `No template found for ${ai}/${script}.\nAvailable templates:\n${available.join('\n')}`
+      `No template found for ${ai}.\nAvailable templates:\n${available.join('\n')}`
     );
   }
 
@@ -164,7 +161,7 @@ export async function downloadTemplate(
   const response = await fetch(asset.browser_download_url, {
     headers: {
       Accept: 'application/octet-stream',
-      'User-Agent': 'specify-cli',
+      'User-Agent': 'speckit-cli',
       ...headers,
     },
   });

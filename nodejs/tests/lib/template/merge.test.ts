@@ -113,7 +113,7 @@ describe('deepMerge', () => {
     };
     const update = {
       'chat.promptFilesLocations': {
-        '.specify/prompts': true,
+        '.speckit/prompts': true,
       },
     };
     const result = deepMerge(base, update);
@@ -121,7 +121,7 @@ describe('deepMerge', () => {
       'chat.promptFiles': true,
       'chat.promptFilesLocations': {
         '.github/prompts': true,
-        '.specify/prompts': true,
+        '.speckit/prompts': true,
       },
     });
   });

@@ -118,23 +118,6 @@ export const AGENT_CONFIG: Record<string, AgentConfig> = {
 };
 
 /**
- * Script type choices with descriptions
- */
-export const SCRIPT_TYPE_CHOICES: Record<string, string> = {
-  sh: 'POSIX Shell (bash/zsh)',
-  ps: 'PowerShell',
-  js: 'JavaScript (Node.js)',
-};
-
-/**
- * Get the default script type based on the current platform.
- * Windows defaults to PowerShell, others default to POSIX Shell.
- */
-export function getDefaultScriptType(): 'sh' | 'ps' {
-  return process.platform === 'win32' ? 'ps' : 'sh';
-}
-
-/**
  * Special path for Claude CLI after `claude migrate-installer`
  * See: https://github.com/github/spec-kit/issues/123
  * The migrate-installer command REMOVES the original executable from PATH

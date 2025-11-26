@@ -48,8 +48,13 @@ export interface GitInitResult {
 export function initGitRepo(projectPath: string, _quiet = false): GitInitResult {
   try {
     execSync('git init', { cwd: projectPath, stdio: 'pipe' });
+    
+    // Set local git config for the commit (required in CI environments)
+    execSync('git config user.email "speckit@github.com"', { cwd: projectPath, stdio: 'pipe' });
+    execSync('git config user.name "Speckit CLI"', { cwd: projectPath, stdio: 'pipe' });
+    
     execSync('git add .', { cwd: projectPath, stdio: 'pipe' });
-    execSync('git commit -m "Initial commit from Specify template"', {
+    execSync('git commit -m "Initial commit from Speckit template"', {
       cwd: projectPath,
       stdio: 'pipe',
     });

@@ -77,7 +77,7 @@ describe('initGitRepo', () => {
 
     // Check that a commit was made
     const log = execSync('git log --oneline', { cwd: projectDir, encoding: 'utf-8' });
-    expect(log).toContain('Initial commit from Specify template');
+    expect(log).toContain('Initial commit from Speckit template');
   });
 
   // test_init_git_repo_returns_success

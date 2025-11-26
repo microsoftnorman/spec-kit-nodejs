@@ -1,14 +1,12 @@
 /**
  * Config tests - ported from:
  * - test_agent_config.py
- * - test_script_types.py
  * - test_claude_path.py
  */
 import { describe, it, expect } from 'vitest';
 import { homedir } from 'os';
 import {
   AGENT_CONFIG,
-  SCRIPT_TYPE_CHOICES,
   CLAUDE_LOCAL_PATH,
   ALL_AGENT_KEYS,
   IDE_AGENTS,
@@ -231,33 +229,6 @@ describe('AGENT_CONFIG', () => {
     const keys = Object.keys(AGENT_CONFIG).sort();
     const expected = [...ALL_AGENT_KEYS].sort();
     expect(keys).toEqual(expected);
-  });
-});
-
-describe('SCRIPT_TYPE_CHOICES', () => {
-  // test_script_type_choices_has_two
-  it('should have exactly three script types (sh, ps, and js)', () => {
-    expect(Object.keys(SCRIPT_TYPE_CHOICES)).toHaveLength(3);
-    expect(SCRIPT_TYPE_CHOICES).toHaveProperty('sh');
-    expect(SCRIPT_TYPE_CHOICES).toHaveProperty('ps');
-    expect(SCRIPT_TYPE_CHOICES).toHaveProperty('js');
-  });
-
-  // test_sh_description_exact
-  it('should have exact description for sh', () => {
-    expect(SCRIPT_TYPE_CHOICES.sh).toBe('POSIX Shell (bash/zsh)');
-  });
-
-  // test_ps_description_exact
-  it('should have exact description for ps', () => {
-    expect(SCRIPT_TYPE_CHOICES.ps).toBe('PowerShell');
-  });
-
-  // test_all_values_are_strings
-  it('should have all string values', () => {
-    for (const value of Object.values(SCRIPT_TYPE_CHOICES)) {
-      expect(typeof value).toBe('string');
-    }
   });
 });
 

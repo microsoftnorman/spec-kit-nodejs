@@ -121,7 +121,7 @@ export function ensureExecutableScripts(
     return;
   }
 
-  const scriptsDir = join(projectPath, '.specify', 'scripts');
+  const scriptsDir = join(projectPath, '.speckit', 'scripts');
   
   // Handle missing scripts directory gracefully
   if (!existsSync(scriptsDir)) {

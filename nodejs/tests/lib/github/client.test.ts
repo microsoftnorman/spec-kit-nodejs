@@ -55,7 +55,7 @@ describe('GitHub Client', () => {
         expect.objectContaining({
           headers: expect.objectContaining({
             Accept: 'application/vnd.github.v3+json',
-            'User-Agent': 'specify-cli/nodejs',
+            'User-Agent': 'speckit-cli/nodejs',
           }),
         })
       );

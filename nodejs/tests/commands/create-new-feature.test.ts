@@ -278,7 +278,7 @@ describe('CreateNewFeature Spec Template', () => {
   });
 
   it('copies spec template if it exists', () => {
-    const templateDir = join(tempDir, '.specify', 'templates');
+    const templateDir = join(tempDir, '.speckit', 'templates');
     const featureDir = join(tempDir, 'specs', '001-feature');
 
     mkdirSync(templateDir, { recursive: true });
@@ -304,9 +304,9 @@ describe('CreateNewFeature Spec Template', () => {
     expect(existsSync(specFile)).toBe(true);
   });
 
-  it('template path is .specify/templates/spec-template.md', () => {
-    const templatePath = '.specify/templates/spec-template.md';
-    expect(templatePath).toBe('.specify/templates/spec-template.md');
+  it('template path is .speckit/templates/spec-template.md', () => {
+    const templatePath = '.speckit/templates/spec-template.md';
+    expect(templatePath).toBe('.speckit/templates/spec-template.md');
   });
 });
 

@@ -216,7 +216,7 @@ function checkExistingBranches(shortName: string, specsDir: string): number {
 function findRepoRoot(startDir: string): string | null {
   let dir = startDir;
   while (dir !== dirname(dir)) {
-    if (existsSync(join(dir, '.git')) || existsSync(join(dir, '.specify'))) {
+    if (existsSync(join(dir, '.git')) || existsSync(join(dir, '.speckit'))) {
       return dir;
     }
     dir = dirname(dir);
@@ -322,7 +322,7 @@ export async function createNewFeature(
   mkdirSync(featureDir, { recursive: true });
 
   // Copy spec template if it exists
-  const templatePath = join(repoRoot, '.specify', 'templates', 'spec-template.md');
+  const templatePath = join(repoRoot, '.speckit', 'templates', 'spec-template.md');
   const specFile = join(featureDir, 'spec.md');
 
   if (existsSync(templatePath)) {

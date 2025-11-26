@@ -1,22 +1,19 @@
 /**
- * Init command - initialize a new Specify project
+ * Init command - initialize a new Speckit project
  * Ported from Python specify_cli/__init__.py
  */
 
-import { existsSync, readdirSync, mkdirSync, writeFileSync } from 'fs';
-import { join, resolve, basename } from 'path';
-import { tmpdir } from 'os';
+import { existsSync, readdirSync, mkdirSync } from 'fs';
+import { resolve, basename } from 'path';
 import chalk from 'chalk';
 import { showBanner } from '../lib/ui/banner.js';
 import { StepTracker } from '../lib/ui/tracker.js';
 import { panel } from '../lib/ui/console.js';
-import { selectWithArrows, getAIChoices, getScriptChoices, DEFAULT_AI_KEY, getDefaultScriptKey } from '../lib/ui/select.js';
-import { AGENT_CONFIG, SCRIPT_TYPE_CHOICES, getDefaultScriptType } from '../lib/config.js';
+import { selectWithArrows, getAIChoices, DEFAULT_AI_KEY } from '../lib/ui/select.js';
+import { AGENT_CONFIG } from '../lib/config.js';
 import { checkTool } from '../lib/tools/detect.js';
 import { initGitRepo, isGitRepo } from '../lib/tools/git.js';
-import { downloadTemplate } from '../lib/template/download.js';
-import { extractTemplate } from '../lib/template/extract.js';
-import { ensureExecutableScripts } from '../lib/template/permissions.js';
+import { generateTemplates } from '../lib/template/generator.js';
 import { ExitCode } from '../lib/errors.js';
 import type { InitOptions } from '../types/index.js';
 
@@ -101,8 +98,8 @@ export async function init(
   } else {
     console.log(chalk.red('Error:') + ' Please provide a project name or use --here');
     console.log('');
-    console.log('Usage: specify init <project-name>');
-    console.log('       specify init --here');
+    console.log('Usage: speckit init <project-name>');
+    console.log('       speckit init --here');
     process.exit(ExitCode.INVALID_ARGUMENT);
   }
 
@@ -168,46 +165,10 @@ export async function init(
     }
   }
 
-  // Determine script type
-  let scriptType: string = options.script || '';
-  if (!scriptType) {
-    // Interactive selection if TTY is available
-    if (process.stdin.isTTY && process.stdout.isTTY) {
-      try {
-        console.log();
-        scriptType = await selectWithArrows(
-          getScriptChoices(),
-          'Select script type:',
-          getDefaultScriptKey()
-        );
-      } catch (error) {
-        if (error instanceof Error && error.message.includes('KeyboardInterrupt')) {
-          console.log('\n' + chalk.yellow('Selection cancelled.'));
-          process.exit(ExitCode.USER_CANCELLED);
-        }
-        throw error;
-      }
-    } else {
-      // Non-interactive: default based on OS
-      scriptType = getDefaultScriptType();
-    }
-  }
-
-  // Validate script type
-  if (!SCRIPT_TYPE_CHOICES[scriptType]) {
-    console.log(chalk.red('Error:') + ` Unknown script type '${scriptType}'.`);
-    console.log('Valid options: ' + Object.keys(SCRIPT_TYPE_CHOICES).join(', '));
-    process.exit(ExitCode.INVALID_ARGUMENT);
-  }
-
   // Initialize step tracker
   const tracker = new StepTracker(`Initialize ${projectName}`);
 
-  tracker.add('download', 'Download template');
-  tracker.add('extract', 'Extract files');
-  if (process.platform !== 'win32' && scriptType === 'sh') {
-    tracker.add('chmod', 'Set script permissions');
-  }
+  tracker.add('generate', 'Generate templates');
   if (!options.noGit) {
     tracker.add('git', 'Initialize git repository');
   }
@@ -217,73 +178,26 @@ export async function init(
   console.log(`  Name: ${chalk.green(projectName)}`);
   console.log(`  Path: ${chalk.green(projectPath)}`);
   console.log(`  AI Assistant: ${chalk.green(agentConfig.name)}`);
-  console.log(`  Script Type: ${chalk.green(SCRIPT_TYPE_CHOICES[scriptType])}`);
   console.log();
 
-  // Download template
-  tracker.start('download', 'fetching from GitHub');
-  let zipPath: string;
+  // Generate templates locally
+  tracker.start('generate', 'generating templates');
   try {
-    const tempDir = join(tmpdir(), 'specify-cli');
-    if (!existsSync(tempDir)) {
-      mkdirSync(tempDir, { recursive: true });
-    }
-    
-    const result = await downloadTemplate(selectedAi, scriptType, tempDir, {
-      githubToken: options.githubToken,
-      debug: options.debug,
-    });
-    zipPath = result.zipPath;
-    
-    // Actually write the ZIP file if the download returned a response
-    // The downloadTemplate function may need adjustment to actually write the file
-    
-    tracker.complete('download', `v${result.metadata.release}`);
-  } catch (error) {
-    tracker.error('download', String(error instanceof Error ? error.message : error));
-    console.log(tracker.render());
-    console.log();
-    console.log(chalk.red('Error:') + ' Failed to download template from GitHub.');
-    if (options.debug) {
-      console.log(chalk.dim(String(error)));
-    }
-    console.log('');
-    console.log('Troubleshooting:');
-    console.log('  • Check your internet connection');
-    console.log('  • Use --github-token <token> for higher rate limits');
-    console.log('  • Set GH_TOKEN or GITHUB_TOKEN environment variable');
-    process.exit(ExitCode.NETWORK_ERROR);
-  }
-
-  // Extract files
-  tracker.start('extract', 'extracting to project');
-  try {
-    await extractTemplate(zipPath, projectPath, {
-      here: inCurrentDir,
+    const result = await generateTemplates(selectedAi, projectPath, {
       tracker,
+      verbose: options.debug,
     });
-    tracker.complete('extract', 'done');
+    
+    tracker.complete('generate', `${result.filesGenerated} files created`);
   } catch (error) {
-    tracker.error('extract', String(error instanceof Error ? error.message : error));
+    tracker.error('generate', String(error instanceof Error ? error.message : error));
     console.log(tracker.render());
     console.log();
-    console.log(chalk.red('Error:') + ' Failed to extract template.');
+    console.log(chalk.red('Error:') + ' Failed to generate templates.');
     if (options.debug) {
       console.log(chalk.dim(String(error)));
     }
     process.exit(ExitCode.FILE_SYSTEM_ERROR);
-  }
-
-  // Set script permissions (Unix only)
-  if (process.platform !== 'win32' && scriptType === 'sh') {
-    try {
-      ensureExecutableScripts(projectPath, tracker);
-    } catch (error) {
-      // Non-fatal error, just log it
-      if (options.debug) {
-        console.log(chalk.dim(`Permission error: ${error}`));
-      }
-    }
   }
 
   // Initialize git repository
