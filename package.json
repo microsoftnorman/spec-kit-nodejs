@@ -1,6 +1,6 @@
 {
-  "name": "@specify/cli",
-  "version": "0.0.1",
+  "name": "specify-cli",
+  "version": "0.1.0",
   "description": "Specify CLI - GitHub Spec Kit for Spec-Driven Development",
   "type": "module",
   "main": "dist/index.js",
@@ -20,12 +20,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/github/spec-kit.git"
+    "url": "git+https://github.com/microsoftnorman/spec-kit-nodejs.git"
   },
   "bugs": {
-    "url": "https://github.com/github/spec-kit/issues"
+    "url": "https://github.com/microsoftnorman/spec-kit-nodejs/issues"
   },
-  "homepage": "https://github.com/github/spec-kit#readme",
+  "homepage": "https://github.com/microsoftnorman/spec-kit-nodejs#readme",
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/cli.ts",
