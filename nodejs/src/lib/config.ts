@@ -118,12 +118,13 @@ export const AGENT_CONFIG: Record<string, AgentConfig> = {
 };
 
 /**
- * Script type choices with descriptions
+ * Script type choices with descriptions.
+ * Note: Only 'sh' and 'ps' have templates available in GitHub releases.
+ * The 'js' option is not available until JavaScript templates are published.
  */
 export const SCRIPT_TYPE_CHOICES: Record<string, string> = {
   sh: 'POSIX Shell (bash/zsh)',
   ps: 'PowerShell',
-  js: 'JavaScript (Node.js)',
 };
 
 /**
