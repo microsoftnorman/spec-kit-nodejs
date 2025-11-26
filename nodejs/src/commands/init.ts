@@ -17,6 +17,7 @@ import { initGitRepo, isGitRepo } from '../lib/tools/git.js';
 import { downloadTemplate } from '../lib/template/download.js';
 import { extractTemplate } from '../lib/template/extract.js';
 import { ensureExecutableScripts } from '../lib/template/permissions.js';
+import { generateBuiltinTemplates, shouldUseBuiltinTemplates } from '../lib/template/builtin.js';
 import { ExitCode } from '../lib/errors.js';
 import type { InitOptions } from '../types/index.js';
 
@@ -203,8 +204,15 @@ export async function init(
   // Initialize step tracker
   const tracker = new StepTracker(`Initialize ${projectName}`);
 
-  tracker.add('download', 'Download template');
-  tracker.add('extract', 'Extract files');
+  // Use built-in templates for js, download for sh/ps
+  const useBuiltin = shouldUseBuiltinTemplates(scriptType);
+  
+  if (useBuiltin) {
+    tracker.add('generate', 'Generate templates');
+  } else {
+    tracker.add('download', 'Download template');
+    tracker.add('extract', 'Extract files');
+  }
   if (process.platform !== 'win32' && scriptType === 'sh') {
     tracker.add('chmod', 'Set script permissions');
   }
@@ -220,58 +228,77 @@ export async function init(
   console.log(`  Script Type: ${chalk.green(SCRIPT_TYPE_CHOICES[scriptType])}`);
   console.log();
 
-  // Download template
-  tracker.start('download', 'fetching from GitHub');
-  let zipPath: string;
-  try {
-    const tempDir = join(tmpdir(), 'specify-cli');
-    if (!existsSync(tempDir)) {
-      mkdirSync(tempDir, { recursive: true });
+  if (useBuiltin) {
+    // Generate built-in templates for js
+    tracker.start('generate', 'creating project structure');
+    try {
+      await generateBuiltinTemplates(projectPath, {
+        ai: selectedAi,
+        tracker,
+        debug: options.debug,
+      });
+      tracker.complete('generate', 'done');
+    } catch (error) {
+      tracker.error('generate', String(error instanceof Error ? error.message : error));
+      console.log(tracker.render());
+      console.log();
+      console.log(chalk.red('Error:') + ' Failed to generate templates.');
+      if (options.debug) {
+        console.log(chalk.dim(String(error)));
+      }
+      process.exit(ExitCode.FILE_SYSTEM_ERROR);
     }
-    
-    const result = await downloadTemplate(selectedAi, scriptType, tempDir, {
-      githubToken: options.githubToken,
-      debug: options.debug,
-    });
-    zipPath = result.zipPath;
-    
-    // Actually write the ZIP file if the download returned a response
-    // The downloadTemplate function may need adjustment to actually write the file
-    
-    tracker.complete('download', `v${result.metadata.release}`);
-  } catch (error) {
-    tracker.error('download', String(error instanceof Error ? error.message : error));
-    console.log(tracker.render());
-    console.log();
-    console.log(chalk.red('Error:') + ' Failed to download template from GitHub.');
-    if (options.debug) {
-      console.log(chalk.dim(String(error)));
+  } else {
+    // Download template from GitHub
+    tracker.start('download', 'fetching from GitHub');
+    let zipPath: string;
+    try {
+      const tempDir = join(tmpdir(), 'specify-cli');
+      if (!existsSync(tempDir)) {
+        mkdirSync(tempDir, { recursive: true });
+      }
+      
+      const result = await downloadTemplate(selectedAi, scriptType, tempDir, {
+        githubToken: options.githubToken,
+        debug: options.debug,
+      });
+      zipPath = result.zipPath;
+      
+      tracker.complete('download', `v${result.metadata.release}`);
+    } catch (error) {
+      tracker.error('download', String(error instanceof Error ? error.message : error));
+      console.log(tracker.render());
+      console.log();
+      console.log(chalk.red('Error:') + ' Failed to download template from GitHub.');
+      if (options.debug) {
+        console.log(chalk.dim(String(error)));
+      }
+      console.log('');
+      console.log('Troubleshooting:');
+      console.log('  • Check your internet connection');
+      console.log('  • Use --github-token <token> for higher rate limits');
+      console.log('  • Set GH_TOKEN or GITHUB_TOKEN environment variable');
+      process.exit(ExitCode.NETWORK_ERROR);
     }
-    console.log('');
-    console.log('Troubleshooting:');
-    console.log('  • Check your internet connection');
-    console.log('  • Use --github-token <token> for higher rate limits');
-    console.log('  • Set GH_TOKEN or GITHUB_TOKEN environment variable');
-    process.exit(ExitCode.NETWORK_ERROR);
-  }
 
-  // Extract files
-  tracker.start('extract', 'extracting to project');
-  try {
-    await extractTemplate(zipPath, projectPath, {
-      here: inCurrentDir,
-      tracker,
-    });
-    tracker.complete('extract', 'done');
-  } catch (error) {
-    tracker.error('extract', String(error instanceof Error ? error.message : error));
-    console.log(tracker.render());
-    console.log();
-    console.log(chalk.red('Error:') + ' Failed to extract template.');
-    if (options.debug) {
-      console.log(chalk.dim(String(error)));
+    // Extract files
+    tracker.start('extract', 'extracting to project');
+    try {
+      await extractTemplate(zipPath, projectPath, {
+        here: inCurrentDir,
+        tracker,
+      });
+      tracker.complete('extract', 'done');
+    } catch (error) {
+      tracker.error('extract', String(error instanceof Error ? error.message : error));
+      console.log(tracker.render());
+      console.log();
+      console.log(chalk.red('Error:') + ' Failed to extract template.');
+      if (options.debug) {
+        console.log(chalk.dim(String(error)));
+      }
+      process.exit(ExitCode.FILE_SYSTEM_ERROR);
     }
-    process.exit(ExitCode.FILE_SYSTEM_ERROR);
   }
 
   // Set script permissions (Unix only)
