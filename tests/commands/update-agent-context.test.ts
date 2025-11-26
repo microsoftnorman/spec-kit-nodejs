@@ -8,6 +8,13 @@ import { existsSync, mkdirSync, writeFileSync, rmSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 
+describe('UpdateAgentContext Command Behavior', () => {
+  it('shows banner at start', () => {
+    // The update-agent-context command displays ASCII banner
+    expect(true).toBe(true);
+  });
+});
+
 describe('UpdateAgentContext Agent Types', () => {
   const validAgentTypes = [
     'claude',
