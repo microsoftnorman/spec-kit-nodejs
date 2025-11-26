@@ -18,8 +18,12 @@ export interface InitOptions {
   script?: string;
   /** Skip checks for AI agent CLI tools */
   ignoreAgentTools?: boolean;
-  /** Skip git repository initialization */
-  noGit?: boolean;
+  /** 
+   * Git repository initialization.
+   * Commander.js sets this to false when --no-git is passed.
+   * Defaults to true (init git by default).
+   */
+  git?: boolean;
   /** Initialize in current directory */
   here?: boolean;
   /** Skip confirmation for non-empty directories */

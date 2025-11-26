@@ -216,7 +216,9 @@ export async function init(
   if (process.platform !== 'win32' && scriptType === 'sh') {
     tracker.add('chmod', 'Set script permissions');
   }
-  if (!options.noGit) {
+  // Commander.js sets git to false when --no-git is passed
+  const shouldInitGit = options.git !== false;
+  if (shouldInitGit) {
     tracker.add('git', 'Initialize git repository');
   }
 
@@ -314,7 +316,7 @@ export async function init(
   }
 
   // Initialize git repository
-  if (!options.noGit) {
+  if (shouldInitGit) {
     tracker.start('git', 'initializing repository');
     if (isGitRepo(projectPath)) {
       tracker.skip('git', 'already a git repository');
