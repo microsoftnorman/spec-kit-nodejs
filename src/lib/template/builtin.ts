@@ -301,12 +301,31 @@ function removeFrontmatter(content: string): string {
 
 /**
  * Generate .vscode/settings.json content.
+ * Uses the template file if available, otherwise generates defaults.
  */
-function generateVSCodeSettings(): string {
+function generateVSCodeSettings(templatesDir: string): string {
+  // Try to use the template file if available
+  const templateSettingsPath = join(templatesDir, 'vscode-settings.json');
+  if (templatesDir && existsSync(templateSettingsPath)) {
+    return readFileSync(templateSettingsPath, 'utf-8');
+  }
+  
+  // Fallback to default settings
   return JSON.stringify({
     "chat.commandCenter.enabled": true,
     "github.copilot.chat.codeGeneration.useInstructionFiles": true,
-    "chat.agent.maxRequests": 100
+    "chat.agent.maxRequests": 100,
+    "chat.promptFilesRecommendations": {
+      "speckit.constitution": true,
+      "speckit.specify": true,
+      "speckit.plan": true,
+      "speckit.tasks": true,
+      "speckit.implement": true
+    },
+    "chat.tools.terminal.autoApprove": {
+      ".specify/scripts/bash/": true,
+      ".specify/scripts/powershell/": true
+    }
   }, null, 2);
 }
 
@@ -444,7 +463,7 @@ export async function generateBuiltinTemplates(
   // Generate VS Code settings
   const settingsPath = join(vscodeDir, 'settings.json');
   if (!existsSync(settingsPath)) {
-    writeFileSync(settingsPath, generateVSCodeSettings());
+    writeFileSync(settingsPath, generateVSCodeSettings(templatesDir));
   }
 
   // Create .gitkeep in specs directory

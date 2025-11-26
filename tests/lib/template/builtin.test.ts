@@ -196,8 +196,9 @@ describe('generateBuiltinTemplates', () => {
       const content = readFileSync(join(tempDir, '.vscode', 'settings.json'), 'utf-8');
       const settings = JSON.parse(content);
       
-      expect(settings['chat.commandCenter.enabled']).toBe(true);
-      expect(settings['github.copilot.chat.codeGeneration.useInstructionFiles']).toBe(true);
+      // Check for prompt file recommendations
+      expect(settings['chat.promptFilesRecommendations']).toBeDefined();
+      expect(settings['chat.promptFilesRecommendations']['speckit.specify']).toBe(true);
     });
 
     it('does not overwrite existing settings.json', async () => {

@@ -271,8 +271,9 @@ describe('Init Command with --script js', () => {
       const content = readFileSync(join(projectDir, '.vscode', 'settings.json'), 'utf-8');
       const settings = JSON.parse(content);
 
-      expect(settings['chat.commandCenter.enabled']).toBe(true);
-      expect(settings['github.copilot.chat.codeGeneration.useInstructionFiles']).toBe(true);
+      // Check for prompt file recommendations
+      expect(settings['chat.promptFilesRecommendations']).toBeDefined();
+      expect(settings['chat.promptFilesRecommendations']['speckit.specify']).toBe(true);
     });
   });
 
