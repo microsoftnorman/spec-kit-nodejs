@@ -8,9 +8,25 @@
   "bin": {
     "specify": "./bin/specify.js"
   },
+  "files": [
+    "dist",
+    "bin",
+    "templates",
+    "memory",
+    "README.md",
+    "LICENSE"
+  ],
   "engines": {
     "node": ">=18.0.0"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/github/spec-kit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/github/spec-kit/issues"
+  },
+  "homepage": "https://github.com/github/spec-kit#readme",
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/cli.ts",
@@ -19,7 +35,8 @@
     "test:coverage": "vitest run --coverage",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build && npm test"
   },
   "keywords": [
     "cli",
@@ -28,7 +45,11 @@
     "sdd",
     "ai-coding",
     "github",
-    "copilot"
+    "copilot",
+    "claude",
+    "gemini",
+    "cursor",
+    "windsurf"
   ],
   "author": "GitHub",
   "license": "MIT",

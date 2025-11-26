@@ -37,6 +37,20 @@ jobs:
       - name: Run tests
         run: npm test
 
+      - name: Verify package contents
+        run: |
+          echo "📦 Package contents:"
+          npm pack --dry-run
+          echo ""
+          echo "📋 Files that will be included:"
+          npm pack --dry-run 2>&1 | grep -E "^\d" || true
+
+      - name: Verify CLI works
+        run: |
+          echo "🔧 Testing CLI..."
+          node bin/specify.js --version
+          node bin/specify.js --help
+
       - name: Publish to npm (dry run)
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.dry-run == 'true'
         run: npm publish --dry-run
