@@ -165,21 +165,20 @@ describe('generateBuiltinTemplates', () => {
       expect(existsSync(filePath)).toBe(true);
     });
 
-    it('constitution contains SDD methodology reference', async () => {
+    it('creates constitution.md in .specify/memory directory', async () => {
       await generateBuiltinTemplates(tempDir, { ai: 'copilot' });
 
-      const content = readFileSync(join(tempDir, 'memory', 'constitution.md'), 'utf-8');
-      expect(content).toContain('Spec-Driven Development');
+      const filePath = join(tempDir, '.specify', 'memory', 'constitution.md');
+      expect(existsSync(filePath)).toBe(true);
     });
 
-    it('constitution contains core sections', async () => {
+    it('constitution contains expected structure', async () => {
       await generateBuiltinTemplates(tempDir, { ai: 'copilot' });
 
       const content = readFileSync(join(tempDir, 'memory', 'constitution.md'), 'utf-8');
-      expect(content).toContain('Development Methodology');
-      expect(content).toContain('Code Standards');
-      expect(content).toContain('Architecture Decisions');
-      expect(content).toContain('Testing Requirements');
+      // Check for template content or actual constitution content
+      expect(content).toContain('Constitution');
+      expect(content).toContain('Core Principles');
     });
   });
 
@@ -215,34 +214,55 @@ describe('generateBuiltinTemplates', () => {
   });
 
   describe('agent-specific files', () => {
-    it('creates copilot-instructions.md for copilot', async () => {
+    it('creates command files for copilot with .agent.md extension', async () => {
       await generateBuiltinTemplates(tempDir, { ai: 'copilot' });
 
-      const filePath = join(tempDir, '.github', 'agents', 'copilot-instructions.md');
+      const filePath = join(tempDir, '.github', 'agents', 'speckit.specify.agent.md');
       expect(existsSync(filePath)).toBe(true);
       
       const content = readFileSync(filePath, 'utf-8');
-      expect(content).toContain('GitHub Copilot Instructions');
+      expect(content).toContain('description:');
     });
 
-    it('creates agent-rules.md for non-copilot agents', async () => {
+    it('creates command files for claude with .md extension', async () => {
       await generateBuiltinTemplates(tempDir, { ai: 'claude' });
 
-      const filePath = join(tempDir, '.claude', 'commands', 'claude-rules.md');
+      const filePath = join(tempDir, '.claude', 'commands', 'speckit.specify.md');
       expect(existsSync(filePath)).toBe(true);
     });
 
-    it('copilot instructions contain SDD workflow', async () => {
+    it('creates command files for gemini with .toml extension', async () => {
+      await generateBuiltinTemplates(tempDir, { ai: 'gemini' });
+
+      const filePath = join(tempDir, '.gemini', 'commands', 'speckit.specify.toml');
+      expect(existsSync(filePath)).toBe(true);
+      
+      const content = readFileSync(filePath, 'utf-8');
+      expect(content).toContain('description =');
+      expect(content).toContain('prompt = """');
+    });
+
+    it('copilot prompts directory is created with prompt files', async () => {
       await generateBuiltinTemplates(tempDir, { ai: 'copilot' });
 
+      const promptsDir = join(tempDir, '.github', 'prompts');
+      expect(existsSync(promptsDir)).toBe(true);
+      
+      const promptFile = join(promptsDir, 'speckit.specify.prompt.md');
+      expect(existsSync(promptFile)).toBe(true);
+      
+      const content = readFileSync(promptFile, 'utf-8');
+      expect(content).toContain('agent: speckit.specify');
+    });
+
+    it('command files contain correct script commands for js', async () => {
+      await generateBuiltinTemplates(tempDir, { ai: 'claude' });
+
       const content = readFileSync(
-        join(tempDir, '.github', 'agents', 'copilot-instructions.md'),
+        join(tempDir, '.claude', 'commands', 'speckit.specify.md'),
         'utf-8'
       );
-      expect(content).toContain('Spec-Driven Development');
-      expect(content).toContain('/speckit.specify');
-      expect(content).toContain('/speckit.plan');
-      expect(content).toContain('/speckit.tasks');
+      expect(content).toContain('npx specify');
     });
   });
 
@@ -262,13 +282,13 @@ describe('generateBuiltinTemplates', () => {
       { key: 'gemini', dir: '.gemini/commands' },
       { key: 'cursor-agent', dir: '.cursor/commands' },
       { key: 'qwen', dir: '.qwen/commands' },
-      { key: 'opencode', dir: '.opencode/commands' },
-      { key: 'codex', dir: '.codex/commands' },
+      { key: 'opencode', dir: '.opencode/command' },
+      { key: 'codex', dir: '.codex/prompts' },
       { key: 'windsurf', dir: '.windsurf/workflows' },
-      { key: 'kilocode', dir: '.kilocode/rules' },
-      { key: 'auggie', dir: '.augment/rules' },
+      { key: 'kilocode', dir: '.kilocode/workflows' },
+      { key: 'auggie', dir: '.augment/commands' },
       { key: 'codebuddy', dir: '.codebuddy/commands' },
-      { key: 'roo', dir: '.roo/rules' },
+      { key: 'roo', dir: '.roo/commands' },
       { key: 'q', dir: '.amazonq/prompts' },
       { key: 'amp', dir: '.agents/commands' },
       { key: 'shai', dir: '.shai/commands' },
