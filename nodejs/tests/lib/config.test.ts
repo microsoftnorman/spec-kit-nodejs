@@ -235,16 +235,10 @@ describe('AGENT_CONFIG', () => {
 });
 
 describe('SCRIPT_TYPE_CHOICES', () => {
-  // test_script_type_choices_has_two
-  it('should have exactly two script types (ps and js)', () => {
-    expect(Object.keys(SCRIPT_TYPE_CHOICES)).toHaveLength(2);
-    expect(SCRIPT_TYPE_CHOICES).toHaveProperty('ps');
+  // test_script_type_choices
+  it('should have exactly one script type (js)', () => {
+    expect(Object.keys(SCRIPT_TYPE_CHOICES)).toHaveLength(1);
     expect(SCRIPT_TYPE_CHOICES).toHaveProperty('js');
-  });
-
-  // test_ps_description_exact
-  it('should have exact description for ps', () => {
-    expect(SCRIPT_TYPE_CHOICES.ps).toBe('PowerShell');
   });
 
   // test_js_description_exact

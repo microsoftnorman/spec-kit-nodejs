@@ -145,9 +145,9 @@ describe('GitHub Client', () => {
       html_url: 'https://github.com/github/spec-kit/releases/tag/v0.0.22',
       assets: [
         {
-          name: 'spec-kit-template-copilot-ps-0.0.22.zip',
+          name: 'spec-kit-template-copilot-js-0.0.22.zip',
           size: 100000,
-          browser_download_url: 'https://example.com/copilot-ps.zip',
+          browser_download_url: 'https://example.com/copilot-js.zip',
           content_type: 'application/zip',
         },
         {
@@ -157,19 +157,19 @@ describe('GitHub Client', () => {
           content_type: 'application/zip',
         },
         {
-          name: 'spec-kit-template-claude-ps-0.0.22.zip',
+          name: 'spec-kit-template-claude-js-0.0.22.zip',
           size: 100002,
-          browser_download_url: 'https://example.com/claude-ps.zip',
+          browser_download_url: 'https://example.com/claude-js.zip',
           content_type: 'application/zip',
         },
       ],
     };
 
     it('should find matching asset for ai and script type', () => {
-      const asset = findTemplateAsset(release, 'copilot', 'ps');
+      const asset = findTemplateAsset(release, 'copilot', 'js');
       
       expect(asset).not.toBeNull();
-      expect(asset?.name).toBe('spec-kit-template-copilot-ps-0.0.22.zip');
+      expect(asset?.name).toBe('spec-kit-template-copilot-js-0.0.22.zip');
     });
 
     it('should find JavaScript variant', () => {
@@ -180,14 +180,14 @@ describe('GitHub Client', () => {
     });
 
     it('should find different AI assistant', () => {
-      const asset = findTemplateAsset(release, 'claude', 'ps');
+      const asset = findTemplateAsset(release, 'claude', 'js');
       
       expect(asset).not.toBeNull();
-      expect(asset?.name).toBe('spec-kit-template-claude-ps-0.0.22.zip');
+      expect(asset?.name).toBe('spec-kit-template-claude-js-0.0.22.zip');
     });
 
     it('should return null for non-existent combination', () => {
-      const asset = findTemplateAsset(release, 'nonexistent', 'ps');
+      const asset = findTemplateAsset(release, 'nonexistent', 'js');
       
       expect(asset).toBeNull();
     });
@@ -198,7 +198,7 @@ describe('GitHub Client', () => {
         assets: [],
       };
       
-      const asset = findTemplateAsset(emptyRelease, 'copilot', 'ps');
+      const asset = findTemplateAsset(emptyRelease, 'copilot', 'js');
       
       expect(asset).toBeNull();
     });

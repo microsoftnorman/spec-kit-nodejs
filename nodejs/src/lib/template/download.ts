@@ -130,7 +130,7 @@ export async function fetchLatestRelease(options?: {
  * Download a template from GitHub releases.
  * 
  * @param ai - AI assistant type (e.g., 'copilot', 'claude')
- * @param script - Script type ('sh' or 'ps')
+ * @param script - Script type
  * @param destDir - Destination directory for download
  * @param options - Download options
  * @returns Download result with zip path and metadata

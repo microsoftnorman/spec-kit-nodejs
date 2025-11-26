@@ -14,7 +14,7 @@ export * from '../lib/errors.js';
 export interface InitOptions {
   /** AI assistant to use */
   ai?: string;
-  /** Script type: ps or js */
+  /** Script type: js */
   script?: string;
   /** Skip checks for AI agent CLI tools */
   ignoreAgentTools?: boolean;

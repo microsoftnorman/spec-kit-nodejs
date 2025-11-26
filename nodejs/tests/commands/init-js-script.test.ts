@@ -485,7 +485,7 @@ describe('Init Command with --script js', () => {
   });
 });
 
-describe('Init with --script js vs --script ps', () => {
+describe('Init with --script js (only option)', () => {
   let tempDir: string;
 
   beforeEach(() => {
@@ -496,7 +496,7 @@ describe('Init with --script js vs --script ps', () => {
     cleanupTempDir(tempDir);
   });
 
-  it('js and ps create similar directory structures', () => {
+  it('js creates expected directory structures', () => {
     const jsDir = join(tempDir, 'js-project');
 
     // Create with js (built-in)

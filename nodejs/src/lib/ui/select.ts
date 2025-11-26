@@ -75,7 +75,7 @@ export const DEFAULT_AI_KEY = 'copilot';
 /**
  * Get default script type based on OS.
  */
-export function getDefaultScriptKey(): 'ps' | 'js' {
+export function getDefaultScriptKey(): 'js' {
   return getDefaultScriptType();
 }
 

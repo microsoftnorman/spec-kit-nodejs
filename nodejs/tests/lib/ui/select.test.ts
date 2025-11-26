@@ -101,13 +101,9 @@ describe('Select With Arrows Defaults', () => {
     expect(DEFAULT_AI_KEY).toBe('copilot');
   });
 
-  it('default script key is OS dependent', () => {
+  it('default script key is always js', () => {
     const defaultKey = getDefaultScriptKey();
-    if (platform() === 'win32') {
-      expect(defaultKey).toBe('ps');
-    } else {
-      expect(defaultKey).toBe('js');
-    }
+    expect(defaultKey).toBe('js');
   });
 });
 
@@ -126,14 +122,13 @@ describe('Select With Arrows Used For', () => {
 
   it('script selection uses SCRIPT_TYPE_CHOICES', () => {
     const scriptChoices = getScriptChoices();
-    expect(Object.keys(scriptChoices)).toHaveLength(2);
-    expect(scriptChoices['ps']).toBe('PowerShell');
+    expect(Object.keys(scriptChoices)).toHaveLength(1);
     expect(scriptChoices['js']).toBe('JavaScript/Node.js (built-in)');
   });
 
-  it('script selection default depends on OS', () => {
+  it('script selection default is js', () => {
     const defaultScript = getDefaultScriptKey();
-    expect(['ps', 'js']).toContain(defaultScript);
+    expect(defaultScript).toBe('js');
     expect(SCRIPT_TYPE_CHOICES[defaultScript]).toBeDefined();
   });
 });
@@ -150,7 +145,6 @@ describe('Select Options Structure', () => {
 
   it('script choices are complete', () => {
     const scriptChoices = getScriptChoices();
-    expect(scriptChoices['ps']).toBe('PowerShell');
     expect(scriptChoices['js']).toBe('JavaScript/Node.js (built-in)');
   });
 });

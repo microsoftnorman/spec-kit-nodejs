@@ -119,20 +119,18 @@ export const AGENT_CONFIG: Record<string, AgentConfig> = {
 
 /**
  * Script type choices with descriptions.
- * 'ps' downloads templates from GitHub releases.
  * 'js' uses built-in templates (no download required).
  */
 export const SCRIPT_TYPE_CHOICES: Record<string, string> = {
-  ps: 'PowerShell',
   js: 'JavaScript/Node.js (built-in)',
 };
 
 /**
- * Get the default script type based on the current platform.
- * Windows defaults to PowerShell, others default to js (built-in).
+ * Get the default script type.
+ * Always returns 'js' (built-in templates).
  */
-export function getDefaultScriptType(): 'ps' | 'js' {
-  return process.platform === 'win32' ? 'ps' : 'js';
+export function getDefaultScriptType(): 'js' {
+  return 'js';
 }
 
 /**

@@ -42,16 +42,16 @@ describe('Template Download API', () => {
 
 describe('Asset Name Pattern', () => {
   it('pattern format matches spec-kit-template-{ai}-{script}-{version}.zip', () => {
-    const pattern = getAssetNamePattern('copilot', 'ps');
-    expect(pattern.test('spec-kit-template-copilot-ps-0.0.22.zip')).toBe(true);
-    expect(pattern.test('spec-kit-template-copilot-ps-1.0.0.zip')).toBe(true);
+    const pattern = getAssetNamePattern('copilot', 'js');
+    expect(pattern.test('spec-kit-template-copilot-js-0.0.22.zip')).toBe(true);
+    expect(pattern.test('spec-kit-template-copilot-js-1.0.0.zip')).toBe(true);
   });
 
   it('pattern examples for valid asset names', () => {
     const validPatterns = [
-      'spec-kit-template-copilot-ps-0.0.22.zip',
-      'spec-kit-template-claude-ps-0.0.22.zip',
-      'spec-kit-template-gemini-ps-1.0.0.zip',
+      'spec-kit-template-copilot-js-0.0.22.zip',
+      'spec-kit-template-claude-js-0.0.22.zip',
+      'spec-kit-template-gemini-js-1.0.0.zip',
     ];
 
     for (const pattern of validPatterns) {
@@ -67,14 +67,14 @@ describe('Asset Name Pattern', () => {
       name: 'Release 0.0.22',
       published_at: '2024-01-01T00:00:00Z',
       assets: [
-        { name: 'spec-kit-template-copilot-ps-0.0.22.zip', size: 1000, browser_download_url: 'https://example.com/1' },
-        { name: 'spec-kit-template-claude-ps-0.0.22.zip', size: 2000, browser_download_url: 'https://example.com/2' },
+        { name: 'spec-kit-template-copilot-js-0.0.22.zip', size: 1000, browser_download_url: 'https://example.com/1' },
+        { name: 'spec-kit-template-claude-js-0.0.22.zip', size: 2000, browser_download_url: 'https://example.com/2' },
       ],
     };
 
-    const asset = findMatchingAsset(release, 'copilot', 'ps');
+    const asset = findMatchingAsset(release, 'copilot', 'js');
     expect(asset).not.toBeNull();
-    expect(asset?.name).toBe('spec-kit-template-copilot-ps-0.0.22.zip');
+    expect(asset?.name).toBe('spec-kit-template-copilot-js-0.0.22.zip');
   });
 
   it('returns null when no match found', () => {
@@ -83,11 +83,11 @@ describe('Asset Name Pattern', () => {
       name: 'Release 0.0.22',
       published_at: '2024-01-01T00:00:00Z',
       assets: [
-        { name: 'spec-kit-template-copilot-ps-0.0.22.zip', size: 1000, browser_download_url: 'https://example.com/1' },
+        { name: 'spec-kit-template-copilot-js-0.0.22.zip', size: 1000, browser_download_url: 'https://example.com/1' },
       ],
     };
 
-    const asset = findMatchingAsset(release, 'claude', 'ps');
+    const asset = findMatchingAsset(release, 'claude', 'js');
     expect(asset).toBeNull();
   });
 

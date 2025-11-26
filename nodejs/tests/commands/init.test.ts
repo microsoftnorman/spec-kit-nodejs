@@ -23,7 +23,7 @@ describe('Init Command Arguments', () => {
 
   it('--script option specifies script type', () => {
     const validTypes = Object.keys(SCRIPT_TYPE_CHOICES);
-    expect(validTypes).toEqual(['ps', 'js']);
+    expect(validTypes).toEqual(['js']);
   });
 
   it('--ignore-agent-tools flag exists', () => {

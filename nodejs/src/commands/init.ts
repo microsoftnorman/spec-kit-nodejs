@@ -203,7 +203,7 @@ export async function init(
   // Initialize step tracker
   const tracker = new StepTracker(`Initialize ${projectName}`);
 
-  // Use built-in templates for js, download for ps
+  // Use built-in templates for js (only option now)
   const useBuiltin = shouldUseBuiltinTemplates(scriptType);
   
   if (useBuiltin) {
