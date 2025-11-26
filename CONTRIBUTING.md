@@ -8,10 +8,9 @@ Please note that this project is released with a [Contributor Code of Conduct](C
 
 These are one time installations required to be able to test your changes locally as part of the pull request (PR) submission process.
 
-1. Install [Python 3.11+](https://www.python.org/downloads/)
-1. Install [uv](https://docs.astral.sh/uv/) for package management
-1. Install [Git](https://git-scm.com/downloads)
-1. Have an [AI coding agent available](README.md#-supported-ai-agents)
+1. Install [Node.js 18+](https://nodejs.org/en/download/)
+2. Install [Git](https://git-scm.com/downloads)
+3. Have an [AI coding agent available](README.md#supported-ai-agents)
 
 <details>
 <summary><b>💡 Hint if you are using <code>VSCode</code> or <code>GitHub Codespaces</code> as your IDE</b></summary>
@@ -36,13 +35,16 @@ On [GitHub Codespaces](https://github.com/features/codespaces) it's even simpler
 >If your pull request introduces a large change that materially impacts the work of the CLI or the rest of the repository (e.g., you're introducing new templates, arguments, or otherwise major changes), make sure that it was **discussed and agreed upon** by the project maintainers. Pull requests with large changes that did not have a prior conversation and agreement will be closed.
 
 1. Fork and clone the repository
-1. Configure and install the dependencies: `uv sync`
-1. Make sure the CLI works on your machine: `uv run specify --help`
-1. Create a new branch: `git checkout -b my-branch-name`
-1. Make your change, add tests, and make sure everything still works
-1. Test the CLI functionality with a sample project if relevant
-1. Push to your fork and submit a pull request
-1. Wait for your pull request to be reviewed and merged.
+2. Install dependencies: `npm install`
+3. Build the project: `npm run build`
+4. Make sure the CLI works on your machine: `npm run dev -- --help`
+5. Create a new branch: `git checkout -b my-branch-name`
+6. Make your change, add tests, and make sure everything still works
+7. Run tests: `npm test`
+8. Run linting: `npm run lint`
+9. Test the CLI functionality with a sample project if relevant
+10. Push to your fork and submit a pull request
+11. Wait for your pull request to be reviewed and merged.
 
 Here are a few things you can do that will increase the likelihood of your pull request being accepted:
 
@@ -62,28 +64,82 @@ When working on spec-kit:
 3. Test script functionality in the `scripts/` directory
 4. Ensure memory files (`memory/constitution.md`) are updated if major process changes are made
 
+### Running the CLI locally
+
+```bash
+# Install dependencies
+npm install
+
+# Build the project
+npm run build
+
+# Run in development mode (uses tsx for fast iteration)
+npm run dev -- --help
+npm run dev -- check
+npm run dev -- init my-project --ai copilot
+
+# Run built CLI directly
+node bin/specify.js --help
+
+# Link globally for testing
+npm link
+specify --help
+```
+
 ### Testing template and command changes locally
 
-Running `uv run specify init` pulls released packages, which won’t include your local changes.  
+Running `npm run dev -- init` pulls released packages, which won't include your local changes.
 To test your templates, commands, and other changes locally, follow these steps:
 
 1. **Create release packages**
 
    Run the following command to generate the local packages:
 
-   ```
+   ```bash
    ./.github/workflows/scripts/create-release-packages.sh v1.0.0
    ```
 
 2. **Copy the relevant package to your test project**
 
-   ```
+   ```bash
    cp -r .genreleases/sdd-copilot-package-sh/. <path-to-test-project>/
    ```
 
 3. **Open and test the agent**
 
    Navigate to your test project folder and open the agent to verify your implementation.
+
+### Running tests
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage
+npm run test:coverage
+
+# Run specific test file
+npm test -- tests/lib/config.test.ts
+
+# Run tests matching a pattern
+npm test -- --grep "AGENT_CONFIG"
+```
+
+### Linting and formatting
+
+```bash
+# Run ESLint
+npm run lint
+
+# Run Prettier
+npm run format
+
+# Type-check without emitting
+npm run typecheck
+```
 
 ## AI contributions in Spec Kit
 

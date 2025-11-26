@@ -1,0 +1,80 @@
+{
+  "name": "specify-cli",
+  "version": "0.1.0",
+  "description": "Specify CLI - GitHub Spec Kit for Spec-Driven Development",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "specify": "./bin/specify.js"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "assets",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/microsoftnorman/spec-kit-nodejs.git"
+  },
+  "bugs": {
+    "url": "https://github.com/microsoftnorman/spec-kit-nodejs/issues"
+  },
+  "homepage": "https://github.com/microsoftnorman/spec-kit-nodejs#readme",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/cli.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "keywords": [
+    "cli",
+    "specification",
+    "spec-driven-development",
+    "sdd",
+    "ai-coding",
+    "github",
+    "copilot",
+    "claude",
+    "gemini",
+    "cursor",
+    "windsurf"
+  ],
+  "author": "GitHub",
+  "license": "MIT",
+  "dependencies": {
+    "@inquirer/prompts": "^5.0.0",
+    "adm-zip": "^0.5.14",
+    "chalk": "^5.3.0",
+    "cli-table3": "^0.6.5",
+    "commander": "^12.1.0",
+    "env-paths": "^3.0.0",
+    "execa": "^9.3.0",
+    "fs-extra": "^11.2.0",
+    "node-fetch": "^3.3.2",
+    "ora": "^8.0.1"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.5",
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^20.14.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "@vitest/coverage-v8": "^1.6.0",
+    "eslint": "^9.5.0",
+    "prettier": "^3.3.2",
+    "tsx": "^4.15.0",
+    "typescript": "^5.5.0",
+    "vitest": "^1.6.0"
+  }
+}

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # update-version.sh
-# Update version in pyproject.toml (for release artifacts only)
+# Update version in package.json (for release artifacts only)
 # Usage: update-version.sh <version>
 
 if [[ $# -ne 1 ]]; then
@@ -12,12 +12,18 @@ fi
 
 VERSION="$1"
 
-# Remove 'v' prefix for Python versioning
-PYTHON_VERSION=${VERSION#v}
+# Remove 'v' prefix for npm versioning
+NPM_VERSION=${VERSION#v}
 
-if [ -f "pyproject.toml" ]; then
-  sed -i "s/version = \".*\"/version = \"$PYTHON_VERSION\"/" pyproject.toml
-  echo "Updated pyproject.toml version to $PYTHON_VERSION (for release artifacts only)"
+if [ -f "package.json" ]; then
+  # Use Node.js to update package.json version (cross-platform safe)
+  node -e "
+    const fs = require('fs');
+    const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+    pkg.version = '$NPM_VERSION';
+    fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+  "
+  echo "Updated package.json version to $NPM_VERSION"
 else
-  echo "Warning: pyproject.toml not found, skipping version update"
+  echo "Warning: package.json not found, skipping version update"
 fi

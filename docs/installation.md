@@ -2,65 +2,96 @@
 
 ## Prerequisites
 
-- **Linux/macOS** (or Windows; PowerShell scripts now supported without WSL)
-- AI coding agent: [Claude Code](https://www.anthropic.com/claude-code), [GitHub Copilot](https://code.visualstudio.com/), [Codebuddy CLI](https://www.codebuddy.ai/cli) or [Gemini CLI](https://github.com/google-gemini/gemini-cli)
-- [uv](https://docs.astral.sh/uv/) for package management
-- [Python 3.11+](https://www.python.org/downloads/)
-- [Git](https://git-scm.com/downloads)
+- **Node.js 18+** ([Download](https://nodejs.org/))
+- **Git** ([Download](https://git-scm.com/downloads))
+- AI coding agent (optional, but recommended):
+  - [Claude Code](https://www.anthropic.com/claude-code)
+  - [GitHub Copilot](https://code.visualstudio.com/)
+  - [Gemini CLI](https://github.com/google-gemini/gemini-cli)
+  - [CodeBuddy CLI](https://www.codebuddy.ai/cli)
+  - Or any other [supported agent](../AGENTS.md)
 
 ## Installation
 
-### Initialize a New Project
-
-The easiest way to get started is to initialize a new project:
+### Install from npm (Recommended)
 
 ```bash
-uvx --from git+https://github.com/github/spec-kit.git specify init <PROJECT_NAME>
+npm install -g @specify/cli
+```
+
+### Install from Source
+
+```bash
+git clone https://github.com/github/spec-kit-nodejs.git
+cd spec-kit-nodejs
+npm install
+npm run build
+npm link
+```
+
+## Quick Start
+
+### Initialize a New Project
+
+```bash
+specify init <PROJECT_NAME>
 ```
 
 Or initialize in the current directory:
 
 ```bash
-uvx --from git+https://github.com/github/spec-kit.git specify init .
+specify init .
 # or use the --here flag
-uvx --from git+https://github.com/github/spec-kit.git specify init --here
+specify init --here
 ```
 
 ### Specify AI Agent
 
-You can proactively specify your AI agent during initialization:
+You can specify your AI agent during initialization:
 
 ```bash
-uvx --from git+https://github.com/github/spec-kit.git specify init <project_name> --ai claude
-uvx --from git+https://github.com/github/spec-kit.git specify init <project_name> --ai gemini
-uvx --from git+https://github.com/github/spec-kit.git specify init <project_name> --ai copilot
-uvx --from git+https://github.com/github/spec-kit.git specify init <project_name> --ai codebuddy
+specify init <project_name> --ai claude
+specify init <project_name> --ai gemini
+specify init <project_name> --ai copilot
+specify init <project_name> --ai codebuddy
 ```
 
 ### Specify Script Type (Shell vs PowerShell)
 
-All automation scripts now have both Bash (`.sh`) and PowerShell (`.ps1`) variants.
+All automation scripts have both Bash (`.sh`) and PowerShell (`.ps1`) variants.
 
-Auto behavior:
+**Auto behavior:**
 
-- Windows default: `ps`
-- Other OS default: `sh`
+- Windows default: `ps` (PowerShell)
+- macOS/Linux default: `sh` (Bash)
 - Interactive mode: you'll be prompted unless you pass `--script`
 
-Force a specific script type:
+**Force a specific script type:**
 
 ```bash
-uvx --from git+https://github.com/github/spec-kit.git specify init <project_name> --script sh
-uvx --from git+https://github.com/github/spec-kit.git specify init <project_name> --script ps
+specify init <project_name> --script sh
+specify init <project_name> --script ps
 ```
 
-### Ignore Agent Tools Check
+### Skip Agent Tool Check
 
 If you prefer to get the templates without checking for the right tools:
 
 ```bash
-uvx --from git+https://github.com/github/spec-kit.git specify init <project_name> --ai claude --ignore-agent-tools
+specify init <project_name> --ai claude --ignore-agent-tools
 ```
+
+## Available Commands
+
+| Command | Description |
+|---------|-------------|
+| `specify init` | Initialize a new Specify project |
+| `specify check` | Check that all required tools are installed |
+| `specify version` | Display version and system information |
+| `specify create-new-feature` | Create a new feature branch with spec files |
+| `specify setup-plan` | Set up planning artifacts for a feature |
+| `specify check-prerequisites` | Check prerequisites for a feature |
+| `specify update-agent-context` | Update AI agent context files |
 
 ## Verification
 
@@ -72,11 +103,60 @@ After initialization, you should see the following commands available in your AI
 
 The `.specify/scripts` directory will contain both `.sh` and `.ps1` scripts.
 
+## Configuration
+
+### GitHub Token (Optional)
+
+For higher API rate limits (5,000 requests/hour vs 60/hour), set a GitHub token:
+
+```bash
+# Via environment variable
+export GH_TOKEN=your_token_here
+# or
+export GITHUB_TOKEN=your_token_here
+
+# Or via CLI flag
+specify init my-project --github-token your_token_here
+```
+
+### Debug Mode
+
+Enable verbose output for troubleshooting:
+
+```bash
+specify init my-project --debug
+```
+
 ## Troubleshooting
+
+### Node.js Version
+
+Ensure you have Node.js 18 or higher:
+
+```bash
+node --version
+# Should output v18.0.0 or higher
+```
+
+### Permission Errors (Unix/macOS)
+
+If you encounter permission errors when installing globally:
+
+```bash
+# Option 1: Use sudo (not recommended)
+sudo npm install -g @specify/cli
+
+# Option 2: Fix npm permissions (recommended)
+mkdir ~/.npm-global
+npm config set prefix '~/.npm-global'
+echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
+npm install -g @specify/cli
+```
 
 ### Git Credential Manager on Linux
 
-If you're having issues with Git authentication on Linux, you can install Git Credential Manager:
+If you're having issues with Git authentication on Linux:
 
 ```bash
 #!/usr/bin/env bash
@@ -89,4 +169,39 @@ echo "Configuring Git to use GCM..."
 git config --global credential.helper manager
 echo "Cleaning up..."
 rm gcm-linux_amd64.2.6.1.deb
+```
+
+### Rate Limiting
+
+If you encounter GitHub API rate limiting:
+
+1. Wait for the rate limit to reset (shown in error message)
+2. Use a GitHub token for higher limits:
+   ```bash
+   export GH_TOKEN=your_token_here
+   specify init my-project
+   ```
+
+### Network Issues
+
+If you're behind a corporate proxy:
+
+```bash
+# Set proxy environment variables
+export HTTP_PROXY=http://proxy.example.com:8080
+export HTTPS_PROXY=http://proxy.example.com:8080
+```
+
+## Updating
+
+### Update Global Installation
+
+```bash
+npm update -g @specify/cli
+```
+
+### Check Current Version
+
+```bash
+specify version
 ```

@@ -1,0 +1,184 @@
+name: Publish to npm
+
+on:
+  # Trigger on version tags
+  push:
+    tags:
+      - 'v*.*.*'
+  
+  # Manual trigger with version bump option
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g., 0.1.0, or bump type: patch/minor/major)'
+        required: true
+        default: 'patch'
+      dry-run:
+        description: 'Dry run (do not publish)'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Run tests
+        run: npm test
+
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            # Extract version from tag (remove 'v' prefix)
+            VERSION="${GITHUB_REF#refs/tags/v}"
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            echo "is_tag=true" >> $GITHUB_OUTPUT
+          else
+            # Manual trigger - use input
+            INPUT="${{ github.event.inputs.version }}"
+            if [[ "$INPUT" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              # Explicit version number
+              VERSION="$INPUT"
+            else
+              # Bump type (patch/minor/major)
+              VERSION=$(npm version $INPUT --no-git-tag-version --allow-same-version | sed 's/v//')
+              git checkout -- package.json package-lock.json
+            fi
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            echo "is_tag=false" >> $GITHUB_OUTPUT
+          fi
+          echo "📦 Publishing version: $VERSION"
+
+      - name: Update version in package.json
+        if: steps.version.outputs.is_tag != 'true'
+        run: |
+          npm version ${{ steps.version.outputs.version }} --no-git-tag-version --allow-same-version
+          echo "Updated package.json to version ${{ steps.version.outputs.version }}"
+
+      - name: Verify package contents
+        run: |
+          echo "📦 Package contents:"
+          npm pack --dry-run
+          echo ""
+          echo "📋 Tarball info:"
+          npm pack --dry-run 2>&1 | tail -20
+
+      - name: Verify CLI works
+        run: |
+          echo "🔧 Testing CLI..."
+          node bin/specify.js --version
+          node bin/specify.js --help
+          node bin/specify.js check || true
+
+      - name: Publish to npm (dry run)
+        if: github.event.inputs.dry-run == 'true'
+        run: |
+          echo "🧪 DRY RUN - Would publish version ${{ steps.version.outputs.version }}"
+          npm publish --dry-run
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish to npm
+        if: github.event_name == 'push' || github.event.inputs.dry-run == 'false'
+        run: |
+          echo "🚀 Publishing version ${{ steps.version.outputs.version }} to npm..."
+          npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create Git tag (if manual publish)
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.dry-run == 'false'
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          git add package.json package-lock.json
+          git commit -m "chore: bump version to $VERSION" || echo "No changes to commit"
+          git tag -a "v$VERSION" -m "Release v$VERSION"
+          git push origin HEAD --tags
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Release
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.dry-run == 'false'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: v${{ steps.version.outputs.version }}
+          body: |
+            ## Installation
+
+            ```bash
+            npm install -g specify-cli
+            ```
+
+            Or use directly with npx:
+
+            ```bash
+            npx specify-cli init my-project --ai copilot
+            ```
+
+            ## What's Changed
+
+            See [CHANGELOG.md](https://github.com/microsoftnorman/spec-kit-nodejs/blob/main/CHANGELOG.md) for details.
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  verify-install:
+    needs: publish
+    if: github.event_name == 'push' || github.event.inputs.dry-run == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for npm to update
+        run: sleep 30
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install from npm
+        run: |
+          npm install -g specify-cli
+          specify --version
+          specify --help
+
+      - name: Verify init command
+        run: |
+          mkdir test-project
+          cd test-project
+          specify init . --ai copilot --no-git --force
+          ls -la
+          ls -la .specify/templates/ || true
