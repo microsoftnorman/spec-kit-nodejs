@@ -9,6 +9,7 @@ import { execSync } from 'child_process';
 import { existsSync, mkdirSync, copyFileSync, writeFileSync, readdirSync, statSync } from 'fs';
 import { join, dirname } from 'path';
 import { getRepoRoot, hasGit } from '../lib/common.js';
+import { showBanner } from '../lib/ui/banner.js';
 
 /**
  * Options for create-new-feature command
@@ -235,6 +236,11 @@ export async function createNewFeature(
   options: CreateNewFeatureOptions
 ): Promise<void> {
   const jsonMode = options.json ?? false;
+
+  // Show banner unless in JSON mode
+  if (!jsonMode) {
+    showBanner();
+  }
 
   if (!featureDescription || featureDescription.trim() === '') {
     console.error('Usage: specify create-new-feature [options] <feature_description>');
