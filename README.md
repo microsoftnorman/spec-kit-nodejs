@@ -139,6 +139,109 @@ spec-kit-nodejs/
 └── bin/                      # Executable
 ```
 
+## Document Hierarchy
+
+Spec Kit uses a structured document hierarchy for Spec-Driven Development:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           SPEC KIT DOCUMENT HIERARCHY                        │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+                         ┌──────────────────────┐
+                         │    CONSTITUTION      │  ← Project-wide rules
+                         │  memory/constitution │     (non-negotiable)
+                         │        .md           │
+                         └──────────┬───────────┘
+                                    │ governs all features
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              PER-FEATURE DOCS                                │
+│                        specs/{NNN-feature-name}/                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+        ┌───────────────────────────┼───────────────────────────┐
+        │                           │                           │
+        ▼                           ▼                           ▼
+┌───────────────┐          ┌───────────────┐          ┌───────────────┐
+│   spec.md     │ ───────▶ │   plan.md     │ ───────▶ │   tasks.md    │
+│               │          │               │          │               │
+│ WHAT & WHY    │          │ HOW           │          │ DO            │
+│               │          │               │          │               │
+│ • Overview    │          │ • Tech stack  │          │ • Task IDs    │
+│ • User stories│          │ • Architecture│          │ • Phases      │
+│ • Functional  │          │ • Data model  │          │ • Parallelism │
+│   requirements│          │ • Phases      │          │ • File paths  │
+│ • Non-func    │          │ • Constraints │          │ • Checkboxes  │
+│   requirements│          │               │          │               │
+│ • Edge cases  │          │               │          │               │
+└───────────────┘          └───────┬───────┘          └───────────────┘
+       │                           │                         │
+       │ /speckit.specify          │ /speckit.plan           │ /speckit.tasks
+       │                           │                         │
+       │                           ▼                         │
+       │                  ┌─────────────────┐                │
+       │                  │ SUPPORTING DOCS │                │
+       │                  │   (optional)    │                │
+       │                  ├─────────────────┤                │
+       │                  │ • research.md   │                │
+       │                  │ • data-model.md │                │
+       │                  │ • contracts/    │                │
+       │                  │ • quickstart.md │                │
+       │                  └─────────────────┘                │
+       │                                                     │
+       └──────────────────────┬──────────────────────────────┘
+                              │
+                              ▼
+                    ┌───────────────────┐
+                    │  /speckit.analyze │  ← Cross-artifact validation
+                    └─────────┬─────────┘
+                              │
+                              ▼
+                    ┌───────────────────┐
+                    │ /speckit.implement│  ← Code generation
+                    └─────────┬─────────┘
+                              │
+                              ▼
+                    ┌───────────────────┐
+                    │    ACTUAL CODE    │
+                    └───────────────────┘
+```
+
+### Document Purpose Summary
+
+| Document | Purpose | Created By | Depends On |
+|----------|---------|------------|------------|
+| `constitution.md` | Immutable project rules | Manual | Nothing |
+| `spec.md` | WHAT to build & WHY | `/speckit.specify` | Constitution |
+| `plan.md` | HOW to build it | `/speckit.plan` | spec.md |
+| `research.md` | Technical research | `/speckit.plan` | spec.md |
+| `data-model.md` | Data entities | `/speckit.plan` | spec.md |
+| `contracts/` | API specs | `/speckit.plan` | spec.md |
+| `tasks.md` | Actionable work items | `/speckit.tasks` | plan.md |
+| `checklist.md` | Implementation checklist | `/speckit.checklist` | tasks.md |
+
+### File Locations
+
+```
+project-root/
+├── memory/
+│   └── constitution.md          ← Project principles
+├── specs/
+│   ├── 001-user-auth/
+│   │   ├── spec.md              ← Feature specification
+│   │   ├── plan.md              ← Implementation plan
+│   │   ├── tasks.md             ← Task breakdown
+│   │   ├── research.md          ← Technical research (optional)
+│   │   ├── data-model.md        ← Data entities (optional)
+│   │   └── contracts/           ← API contracts (optional)
+│   └── 002-payment-system/
+│       └── ...
+├── .specify/
+│   └── templates/               ← Templates for new features
+└── CLAUDE.md / GEMINI.md        ← Agent context files
+```
+
 ## Documentation
 
 - [Installation Guide](docs/installation.md)
