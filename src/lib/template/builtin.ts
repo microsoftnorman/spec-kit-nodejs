@@ -5,8 +5,8 @@
  * downloading from GitHub releases (since js templates aren't published yet).
  */
 
-import { existsSync, mkdirSync, writeFileSync, copyFileSync, readFileSync } from 'fs';
-import { join, dirname } from 'path';
+import { existsSync, mkdirSync, writeFileSync, copyFileSync, readFileSync, readdirSync, statSync } from 'fs';
+import { join, dirname, relative } from 'path';
 import { fileURLToPath } from 'url';
 import type { StepTracker } from '../ui/tracker.js';
 
@@ -167,6 +167,76 @@ export interface GenerateBuiltinResult {
 }
 
 /**
+ * Recursively scan a directory and return all files and directories.
+ * @param dir - Directory to scan
+ * @param baseDir - Base directory for relative paths
+ * @returns Object with arrays of relative file and directory paths
+ */
+function scanDirectory(dir: string, baseDir: string): { files: string[]; directories: string[] } {
+  const files: string[] = [];
+  const directories: string[] = [];
+
+  if (!existsSync(dir)) {
+    return { files, directories };
+  }
+
+  const entries = readdirSync(dir);
+  
+  for (const entry of entries) {
+    const fullPath = join(dir, entry);
+    const relativePath = relative(baseDir, fullPath).replace(/\\/g, '/');
+    
+    if (statSync(fullPath).isDirectory()) {
+      directories.push(relativePath);
+      // Recursively scan subdirectories
+      const subResult = scanDirectory(fullPath, baseDir);
+      files.push(...subResult.files);
+      directories.push(...subResult.directories);
+    } else {
+      files.push(relativePath);
+    }
+  }
+
+  return { files, directories };
+}
+
+/**
+ * Scan the project directory for created spec-kit files and directories.
+ * @param projectPath - Path to the project directory
+ * @param ai - AI assistant key to determine agent directory
+ * @returns Object with arrays of relative file and directory paths
+ */
+function scanCreatedFiles(projectPath: string, ai: string): GenerateBuiltinResult {
+  const allFiles: string[] = [];
+  const allDirs: string[] = [];
+
+  // Directories to scan for spec-kit content
+  const dirsToScan = [
+    '.specify',
+    '.vscode',
+    'memory',
+    'specs',
+    AGENT_DIRS[ai] || '.github/agents',
+  ];
+
+  for (const dir of dirsToScan) {
+    const fullPath = join(projectPath, dir);
+    if (existsSync(fullPath)) {
+      allDirs.push(dir);
+      const result = scanDirectory(fullPath, projectPath);
+      allFiles.push(...result.files);
+      allDirs.push(...result.directories);
+    }
+  }
+
+  // Sort and deduplicate
+  const uniqueFiles = [...new Set(allFiles)].sort();
+  const uniqueDirs = [...new Set(allDirs)].sort();
+
+  return { files: uniqueFiles, directories: uniqueDirs };
+}
+
+/**
  * Generate built-in templates for JavaScript script type.
  * 
  * @param projectPath - Path to the project directory
@@ -178,8 +248,6 @@ export async function generateBuiltinTemplates(
   options: GenerateBuiltinOptions
 ): Promise<GenerateBuiltinResult> {
   const { ai, tracker, debug } = options;
-  const createdFiles: string[] = [];
-  const createdDirs: string[] = [];
   
   let templatesDir: string;
   try {
@@ -209,8 +277,6 @@ export async function generateBuiltinTemplates(
   mkdirSync(vscodeDir, { recursive: true });
   mkdirSync(agentDir, { recursive: true });
 
-  createdDirs.push('.specify/templates', 'memory', 'specs', '.vscode', agentDirRelative);
-
   // Copy or generate template files
   for (const file of TEMPLATE_FILES) {
     const destPath = join(specifyDir, file);
@@ -220,7 +286,6 @@ export async function generateBuiltinTemplates(
       // Generate default content
       writeFileSync(destPath, getDefaultTemplateContent(file));
     }
-    createdFiles.push(`.specify/templates/${file}`);
   }
 
   // Copy or generate command files to agent directory
@@ -229,7 +294,6 @@ export async function generateBuiltinTemplates(
     const destPath = join(agentDir, file);
     if (commandsSourceDir && existsSync(join(commandsSourceDir, file))) {
       copyFileSync(join(commandsSourceDir, file), destPath);
-      createdFiles.push(`${agentDirRelative}/${file}`);
     }
   }
 
@@ -239,32 +303,28 @@ export async function generateBuiltinTemplates(
       join(agentDir, 'copilot-instructions.md'),
       generateCopilotInstructions()
     );
-    createdFiles.push(`${agentDirRelative}/copilot-instructions.md`);
   } else {
     const rulesFile = `${ai}-rules.md`;
     writeFileSync(
       join(agentDir, rulesFile),
       generateCopilotInstructions().replace('GitHub Copilot', AGENT_DIRS[ai] || ai)
     );
-    createdFiles.push(`${agentDirRelative}/${rulesFile}`);
   }
 
   // Generate constitution
   writeFileSync(join(memoryDir, 'constitution.md'), generateConstitution());
-  createdFiles.push('memory/constitution.md');
 
   // Generate VS Code settings
   const settingsPath = join(vscodeDir, 'settings.json');
   if (!existsSync(settingsPath)) {
     writeFileSync(settingsPath, generateVSCodeSettings());
-    createdFiles.push('.vscode/settings.json');
   }
 
   // Create .gitkeep in specs directory
   writeFileSync(join(specsDir, '.gitkeep'), '');
-  createdFiles.push('specs/.gitkeep');
 
-  return { files: createdFiles, directories: createdDirs };
+  // Scan the actual filesystem to determine what was created
+  return scanCreatedFiles(projectPath, ai);
 }
 
 /**
