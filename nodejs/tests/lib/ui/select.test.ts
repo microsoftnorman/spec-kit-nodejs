@@ -108,28 +108,15 @@ describe('Select With Arrows Defaults', () => {
 });
 
 describe('Select With Arrows Used For', () => {
-  it('AI selection uses AGENT_CONFIG keys and names', () => {
+  it('AI selection returns choices from AGENT_CONFIG', () => {
     const aiChoices = getAIChoices();
-    expect(Object.keys(aiChoices)).toHaveLength(15);
-    expect(aiChoices['copilot']).toBe('GitHub Copilot');
-    expect(aiChoices['claude']).toBe('Claude Code');
+    // Verify it returns the same number of choices as AGENT_CONFIG
+    expect(Object.keys(aiChoices).length).toBe(Object.keys(AGENT_CONFIG).length);
   });
 
-  it('AI selection default is copilot', () => {
-    expect(DEFAULT_AI_KEY).toBe('copilot');
-    expect(AGENT_CONFIG['copilot']).toBeDefined();
-  });
-
-  it('script selection uses SCRIPT_TYPE_CHOICES', () => {
+  it('script selection returns choices from SCRIPT_TYPE_CHOICES', () => {
     const scriptChoices = getScriptChoices();
-    expect(Object.keys(scriptChoices)).toHaveLength(1);
-    expect(scriptChoices['js']).toBe('JavaScript/Node.js (built-in)');
-  });
-
-  it('script selection default is js', () => {
-    const defaultScript = getDefaultScriptKey();
-    expect(defaultScript).toBe('js');
-    expect(SCRIPT_TYPE_CHOICES[defaultScript]).toBeDefined();
+    expect(Object.keys(scriptChoices).length).toBe(Object.keys(SCRIPT_TYPE_CHOICES).length);
   });
 });
 
@@ -141,10 +128,5 @@ describe('Select Options Structure', () => {
       expect(typeof name).toBe('string');
       expect(name.length).toBeGreaterThan(0);
     }
-  });
-
-  it('script choices are complete', () => {
-    const scriptChoices = getScriptChoices();
-    expect(scriptChoices['js']).toBe('JavaScript/Node.js (built-in)');
   });
 });

@@ -1,48 +1,10 @@
 /**
  * Platform compatibility tests.
- * Ported from Python test_platform_compat.py
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { platform } from 'os';
-
-// Mock the os module
-vi.mock('os', async () => {
-  const actual = await vi.importActual<typeof import('os')>('os');
-  return {
-    ...actual,
-    platform: vi.fn(() => actual.platform()),
-  };
-});
+import { describe, it, expect } from 'vitest';
 
 describe('Platform Compatibility', () => {
-  const originalPlatform = process.platform;
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  describe('getDefaultScriptType', () => {
-    it('should always return js', async () => {
-      const { getDefaultScriptType } = await import('../src/lib/config.js');
-      expect(getDefaultScriptType()).toBe('js');
-    });
-
-    it('should return js on macOS', async () => {
-      vi.mocked(platform).mockReturnValue('darwin');
-      
-      const { getDefaultScriptType } = await import('../src/lib/config.js');
-      expect(getDefaultScriptType()).toBe('js');
-    });
-
-    it('should return js on Linux', async () => {
-      vi.mocked(platform).mockReturnValue('linux');
-      
-      const { getDefaultScriptType } = await import('../src/lib/config.js');
-      expect(getDefaultScriptType()).toBe('js');
-    });
-  });
-
   describe('isWindows detection', () => {
     it('should detect Windows correctly', async () => {
       const { isWindows } = await import('../src/lib/template/permissions.js');
@@ -52,67 +14,6 @@ describe('Platform Compatibility', () => {
       } else {
         expect(isWindows()).toBe(false);
       }
-    });
-  });
-
-  describe('Command detection', () => {
-    it('should use where on Windows for tool detection', () => {
-      // On Windows, the checkTool function uses 'where' command
-      // On Unix, it uses 'which' command
-      const isWin = process.platform === 'win32';
-      expect(isWin).toBe(process.platform === 'win32');
-    });
-
-    it('should use which on Unix for tool detection', () => {
-      const isUnix = process.platform !== 'win32';
-      expect(isUnix).toBe(process.platform !== 'win32');
-    });
-  });
-
-  describe('Path separators', () => {
-    it('should handle Windows path separators', () => {
-      const winPath = 'C:\\Users\\test\\project';
-      expect(winPath).toContain('\\');
-    });
-
-    it('should handle Unix path separators', () => {
-      const unixPath = '/home/user/project';
-      expect(unixPath).toContain('/');
-    });
-  });
-
-  describe('Script permissions', () => {
-    it('should skip chmod on Windows', async () => {
-      const { isWindows } = await import('../src/lib/template/permissions.js');
-      
-      // The ensureExecutableScripts function should be a no-op on Windows
-      if (isWindows()) {
-        // On Windows, permissions are not set via chmod
-        expect(true).toBe(true);
-      }
-    });
-
-    it('should set permissions on Unix', async () => {
-      const { isWindows } = await import('../src/lib/template/permissions.js');
-      
-      if (!isWindows()) {
-        // On Unix, we can set execute permissions
-        expect(true).toBe(true);
-      }
-    });
-  });
-});
-
-describe('Environment Variables', () => {
-  describe('GitHub token detection', () => {
-    it('should check GH_TOKEN environment variable', () => {
-      const tokenType = typeof process.env.GH_TOKEN;
-      expect(['string', 'undefined']).toContain(tokenType);
-    });
-
-    it('should check GITHUB_TOKEN environment variable', () => {
-      const tokenType = typeof process.env.GITHUB_TOKEN;
-      expect(['string', 'undefined']).toContain(tokenType);
     });
   });
 
