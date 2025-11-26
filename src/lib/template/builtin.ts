@@ -17,33 +17,50 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 /**
- * Get the path to the templates directory in the source repo.
- * This walks up from the dist folder to find the templates.
+ * Get the path to the assets directory in the source repo.
+ * This walks up from the dist folder to find the assets folder.
  */
-function getTemplatesDir(): string {
-  // From dist/lib/template -> project root -> templates
+function getAssetsDir(): string {
+  // From dist/lib/template -> project root -> assets
   let dir = __dirname;
   for (let i = 0; i < 5; i++) {
-    const templatesPath = join(dir, 'templates');
+    const assetsPath = join(dir, 'assets');
+    if (existsSync(assetsPath)) {
+      return assetsPath;
+    }
+    dir = dirname(dir);
+  }
+  throw new Error('Could not find assets directory');
+}
+
+/**
+ * Get the path to the templates directory in the assets folder.
+ */
+function getTemplatesDir(): string {
+  try {
+    const assetsDir = getAssetsDir();
+    const templatesPath = join(assetsDir, 'templates');
     if (existsSync(templatesPath)) {
       return templatesPath;
     }
-    dir = dirname(dir);
+  } catch {
+    // Fall through to error
   }
   throw new Error('Could not find templates directory');
 }
 
 /**
- * Get the path to the memory directory in the source repo.
+ * Get the path to the memory directory in the assets folder.
  */
 function getMemoryDir(): string {
-  let dir = __dirname;
-  for (let i = 0; i < 5; i++) {
-    const memoryPath = join(dir, 'memory');
+  try {
+    const assetsDir = getAssetsDir();
+    const memoryPath = join(assetsDir, 'memory');
     if (existsSync(memoryPath)) {
       return memoryPath;
     }
-    dir = dirname(dir);
+  } catch {
+    // Fall through to error
   }
   throw new Error('Could not find memory directory');
 }

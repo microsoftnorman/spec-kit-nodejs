@@ -11,8 +11,7 @@
   "files": [
     "dist",
     "bin",
-    "templates",
-    "memory",
+    "assets",
     "README.md",
     "LICENSE"
   ],
