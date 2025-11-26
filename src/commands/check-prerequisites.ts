@@ -12,7 +12,6 @@ import {
   dirHasFiles,
   type FeaturePaths,
 } from '../lib/common.js';
-import { showBanner } from '../lib/ui/banner.js';
 
 /**
  * Options for check-prerequisites command
@@ -59,11 +58,6 @@ export async function checkPrerequisites(options: CheckPrerequisitesOptions): Pr
   const requireTasks = options.requireTasks ?? false;
   const includeTasks = options.includeTasks ?? false;
   const pathsOnly = options.pathsOnly ?? false;
-
-  // Show banner unless in JSON mode
-  if (!jsonMode) {
-    showBanner();
-  }
 
   // Get feature paths
   const paths: FeaturePaths = getFeaturePaths();

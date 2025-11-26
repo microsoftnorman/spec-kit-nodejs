@@ -1,6 +1,6 @@
 {
-  "name": "specify-cli",
-  "version": "0.1.0",
+  "name": "@specify/cli",
+  "version": "0.0.1",
   "description": "Specify CLI - GitHub Spec Kit for Spec-Driven Development",
   "type": "module",
   "main": "dist/index.js",
@@ -8,24 +8,9 @@
   "bin": {
     "specify": "./bin/specify.js"
   },
-  "files": [
-    "dist",
-    "bin",
-    "assets",
-    "README.md",
-    "LICENSE"
-  ],
   "engines": {
     "node": ">=18.0.0"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/microsoftnorman/spec-kit-nodejs.git"
-  },
-  "bugs": {
-    "url": "https://github.com/microsoftnorman/spec-kit-nodejs/issues"
-  },
-  "homepage": "https://github.com/microsoftnorman/spec-kit-nodejs#readme",
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/cli.ts",
@@ -34,8 +19,7 @@
     "test:coverage": "vitest run --coverage",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
-    "typecheck": "tsc --noEmit",
-    "prepublishOnly": "npm run build && npm test"
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [
     "cli",
@@ -44,11 +28,7 @@
     "sdd",
     "ai-coding",
     "github",
-    "copilot",
-    "claude",
-    "gemini",
-    "cursor",
-    "windsurf"
+    "copilot"
   ],
   "author": "GitHub",
   "license": "MIT",

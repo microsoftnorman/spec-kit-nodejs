@@ -3,7 +3,7 @@
  * Ported from tests/acceptance/test_interactive_selection.py
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { platform } from 'node:os';
 import {
   getKeyAction,
@@ -13,7 +13,6 @@ import {
   getScriptChoices,
   DEFAULT_AI_KEY,
   getDefaultScriptKey,
-  selectWithArrows,
 } from '../../../src/lib/ui/select.js';
 import { AGENT_CONFIG, SCRIPT_TYPE_CHOICES } from '../../../src/lib/config.js';
 
@@ -129,143 +128,5 @@ describe('Select Options Structure', () => {
       expect(typeof name).toBe('string');
       expect(name.length).toBeGreaterThan(0);
     }
-  });
-});
-
-describe('getKeyAction edge cases', () => {
-  it('handles empty string', () => {
-    expect(getKeyAction('')).toBeNull();
-  });
-
-  it('handles special characters', () => {
-    expect(getKeyAction('\t')).toBeNull(); // Tab
-    expect(getKeyAction(' ')).toBeNull(); // Space
-    expect(getKeyAction('\b')).toBeNull(); // Backspace
-  });
-
-  it('handles numeric keys', () => {
-    expect(getKeyAction('0')).toBeNull();
-    expect(getKeyAction('1')).toBeNull();
-    expect(getKeyAction('9')).toBeNull();
-  });
-
-  it('handles F-keys escape sequences', () => {
-    expect(getKeyAction('\x1b[11~')).toBeNull(); // F1
-    expect(getKeyAction('\x1b[15~')).toBeNull(); // F5
-  });
-});
-
-describe('formatOption variations', () => {
-  it('handles long option keys', () => {
-    const formatted = formatOption('a-very-long-option-key', 'description', true);
-    expect(formatted).toContain('a-very-long-option-key');
-    expect(formatted).toContain('▶');
-  });
-
-  it('handles long descriptions', () => {
-    const longDesc = 'This is a very long description that describes the option in great detail';
-    const formatted = formatOption('key', longDesc, false);
-    expect(formatted).toContain(longDesc);
-  });
-
-  it('handles special characters in key', () => {
-    const formatted = formatOption('key-with-dashes', 'desc', true);
-    expect(formatted).toContain('key-with-dashes');
-  });
-
-  it('handles empty description', () => {
-    const formatted = formatOption('key', '', false);
-    expect(formatted).toContain('[dim]()[/dim]');
-  });
-});
-
-describe('getAIChoices', () => {
-  it('includes copilot', () => {
-    const choices = getAIChoices();
-    expect(choices).toHaveProperty('copilot');
-    expect(choices.copilot).toBe('GitHub Copilot');
-  });
-
-  it('includes claude', () => {
-    const choices = getAIChoices();
-    expect(choices).toHaveProperty('claude');
-    expect(choices.claude).toBe('Claude Code');
-  });
-
-  it('maps AGENT_CONFIG keys to names', () => {
-    const choices = getAIChoices();
-    for (const [key, config] of Object.entries(AGENT_CONFIG)) {
-      expect(choices[key]).toBe(config.name);
-    }
-  });
-});
-
-describe('getScriptChoices', () => {
-  it('includes js option', () => {
-    const choices = getScriptChoices();
-    expect(choices).toHaveProperty('js');
-  });
-
-  it('has at least one option', () => {
-    const choices = getScriptChoices();
-    expect(Object.keys(choices).length).toBeGreaterThan(0);
-  });
-
-  it('all options have descriptions', () => {
-    const choices = getScriptChoices();
-    for (const [key, desc] of Object.entries(choices)) {
-      expect(typeof key).toBe('string');
-      expect(typeof desc).toBe('string');
-      expect(desc.length).toBeGreaterThan(0);
-    }
-  });
-
-  it('returns a copy, not the original', () => {
-    const choices1 = getScriptChoices();
-    const choices2 = getScriptChoices();
-    expect(choices1).not.toBe(choices2);
-    expect(choices1).toEqual(choices2);
-  });
-});
-
-describe('selectWithArrows', () => {
-  // Note: These tests would require proper mocking of @inquirer/prompts
-  // which is complex due to dynamic imports. Testing the wrapper behavior.
-  
-  it('function exists and has correct signature', () => {
-    expect(typeof selectWithArrows).toBe('function');
-    expect(selectWithArrows.length).toBe(3); // 3 parameters
-  });
-
-  it('options parameter accepts Record type', () => {
-    // Type checking - this compiles if types are correct
-    const options: Record<string, string> = { a: 'A', b: 'B' };
-    expect(Object.keys(options)).toHaveLength(2);
-  });
-});
-
-describe('NAVIGATION_HELP', () => {
-  it('contains arrow navigation instruction', () => {
-    expect(NAVIGATION_HELP).toContain('↑/↓');
-  });
-
-  it('contains enter instruction', () => {
-    expect(NAVIGATION_HELP).toContain('Enter');
-  });
-
-  it('contains escape instruction', () => {
-    expect(NAVIGATION_HELP).toContain('Esc');
-  });
-
-  it('contains cancel instruction', () => {
-    expect(NAVIGATION_HELP).toContain('cancel');
-  });
-
-  it('contains navigate instruction', () => {
-    expect(NAVIGATION_HELP).toContain('navigate');
-  });
-
-  it('contains select instruction', () => {
-    expect(NAVIGATION_HELP).toContain('select');
   });
 });

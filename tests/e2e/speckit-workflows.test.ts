@@ -1109,3 +1109,1058 @@ describe('E2E: Init Command Validation', () => {
     expect(output.toLowerCase()).toMatch(/not empty|already exists|--force/);
   });
 });
+
+// ============================================================================
+// Test Suite: Space Invaders Game - Full SDD Workflow Demo
+// ============================================================================
+
+describe('E2E: Space Invaders Game - Complete SDD Workflow', () => {
+  let tempDir: string;
+  let projectDir: string;
+
+  beforeEach(() => {
+    tempDir = createTempDir('specify-space-invaders');
+    projectDir = join(tempDir, 'space-invaders');
+    mkdirSync(projectDir, { recursive: true });
+  });
+
+  afterEach(() => {
+    cleanupTempDir(tempDir);
+  });
+
+  /**
+   * This test demonstrates a complete SDD workflow for building a game.
+   * It simulates what a developer would do when using Spec Kit with GitHub Copilot:
+   * 
+   * 1. Initialize project with Copilot integration
+   * 2. Create a new feature for the Space Invaders game
+   * 3. Set up the planning artifacts
+   * 4. Write comprehensive spec.md with game requirements
+   * 5. Write plan.md with technical architecture
+   * 6. Write tasks.md with implementation tasks
+   * 7. Check prerequisites to verify everything is in place
+   * 8. Update agent context so Copilot knows about the project
+   */
+  it('completes full SDD workflow for Space Invaders game', async () => {
+    // ========================================================================
+    // Step 1: Simulate project initialization (avoiding network)
+    // ========================================================================
+    simulateSpecKitProject(projectDir, { agent: 'copilot', withGit: true });
+
+    // Verify project structure exists
+    expect(existsSync(join(projectDir, '.specify', 'templates'))).toBe(true);
+    expect(existsSync(join(projectDir, '.github', 'agents'))).toBe(true);
+    expect(existsSync(join(projectDir, 'memory', 'constitution.md'))).toBe(true);
+    expect(existsSync(join(projectDir, 'specs'))).toBe(true);
+
+    // ========================================================================
+    // Step 2: Create a new feature for Space Invaders
+    // ========================================================================
+    const { stdout: createOutput } = runCli(
+      'create-new-feature "Build Space Invaders arcade game with HTML5 Canvas" --short-name space-invaders --json',
+      { cwd: projectDir }
+    );
+
+    const createResult = parseJsonOutput(createOutput);
+    expect(createResult.BRANCH_NAME).toBe('001-space-invaders');
+    expect(createResult.FEATURE_NUM).toBe('001');
+    expect(createResult.SPEC_FILE).toContain('specs');
+    expect(createResult.SPEC_FILE).toContain('001-space-invaders');
+
+    // Verify feature directory was created
+    const featureDir = join(projectDir, 'specs', '001-space-invaders');
+    expect(existsSync(featureDir)).toBe(true);
+    expect(existsSync(join(featureDir, 'spec.md'))).toBe(true);
+
+    // ========================================================================
+    // Step 3: Write comprehensive spec.md for Space Invaders
+    // ========================================================================
+    const specContent = `# Feature Specification: Space Invaders Game
+
+## Overview
+
+Build a classic Space Invaders arcade game using HTML5 Canvas and vanilla JavaScript. 
+The game features a player-controlled spaceship defending against waves of descending alien invaders.
+
+## Context
+
+**Target Platform**: Web browser (modern browsers with Canvas support)
+**Technology Stack**: HTML5, CSS3, Vanilla JavaScript (no frameworks)
+**Estimated Complexity**: Medium (500-800 lines of code)
+
+---
+
+## Functional Requirements
+
+### FR-1: Game Canvas
+- The game renders on an HTML5 Canvas element
+- Canvas size: 800x600 pixels
+- Background color: Black (#000000)
+- Canvas is centered on the page
+
+### FR-2: Player Ship
+- Player controls a spaceship at the bottom of the screen
+- Ship dimensions: 50x30 pixels
+- Ship color: Green (#00FF00)
+- Ship can move left and right using arrow keys or A/D keys
+- Ship movement speed: 5 pixels per frame
+- Ship cannot move beyond canvas boundaries
+- Ship spawns at horizontal center, 50 pixels from bottom
+
+### FR-3: Player Shooting
+- Player fires bullets by pressing Spacebar
+- Bullet dimensions: 4x10 pixels
+- Bullet color: Yellow (#FFFF00)
+- Bullet speed: 7 pixels per frame (upward)
+- Maximum 3 bullets on screen at once (fire rate limiter)
+- Bullets originate from top-center of player ship
+
+### FR-4: Alien Invaders
+- Aliens arranged in a 5x11 grid (55 aliens total)
+- Three alien types with different point values:
+  - Top row (11 aliens): 30 points each, color: Magenta (#FF00FF)
+  - Middle rows 2-3 (22 aliens): 20 points each, color: Cyan (#00FFFF)
+  - Bottom rows 4-5 (22 aliens): 10 points each, color: Green (#00FF00)
+- Alien dimensions: 30x20 pixels
+- Aliens move horizontally as a group
+- When any alien reaches canvas edge: drop down 20px, reverse direction
+- Speed increases as aliens are destroyed
+
+### FR-5: Alien Shooting
+- Random aliens fire bullets downward
+- Alien bullet color: Red (#FF0000)
+- Fire rate: Random alien fires every 60-120 frames
+- Maximum 5 alien bullets on screen at once
+
+### FR-6: Collision Detection
+- Player bullet hits alien: Alien destroyed, score increases
+- Alien bullet hits player: Player loses one life
+- Alien reaches player Y position: Game Over
+
+### FR-7: Scoring System
+- Score displayed in top-left corner
+- Format: "SCORE: 00000" (5 digits, zero-padded)
+- High score persisted in localStorage
+
+### FR-8: Lives System
+- Player starts with 3 lives
+- Lives displayed as ship icons below score
+- Losing all lives triggers Game Over
+- Extra life awarded at 1000 points
+
+### FR-9: Game States
+- START: Title screen, "Press SPACE to Start"
+- PLAYING: Active gameplay
+- PAUSED: Press P to pause/resume
+- GAME_OVER: Final score, "Press SPACE to Restart"
+- VICTORY: All aliens destroyed, advance to next wave
+
+### FR-10: Wave System
+- Each wave increases difficulty
+- Wave number displayed on screen
+
+---
+
+## Non-Functional Requirements
+
+### NFR-1: Performance
+- Game runs at consistent 60 FPS
+- No visible lag or stutter during gameplay
+
+### NFR-2: Responsiveness
+- Input latency under 16ms (one frame)
+- Smooth player movement without jitter
+
+### NFR-3: Code Quality
+- No external dependencies (vanilla JS only)
+- Code organized into logical classes
+- Clear separation: Game, Player, Alien, Bullet, UI
+
+### NFR-4: Browser Compatibility
+- Works in Chrome, Firefox, Safari, Edge (latest versions)
+
+---
+
+## User Stories
+
+### US-1: Start Game
+**As a** player
+**I want to** start a new game by pressing Space
+**So that** I can begin playing immediately
+
+**Acceptance Criteria:**
+- [ ] Pressing Space on start screen begins gameplay
+- [ ] Player ship appears at starting position
+- [ ] Aliens appear in formation
+- [ ] Score resets to 0
+
+### US-2: Move Ship
+**As a** player
+**I want to** move my ship left and right
+**So that** I can dodge enemy fire and aim at aliens
+
+**Acceptance Criteria:**
+- [ ] Left arrow / A key moves ship left
+- [ ] Right arrow / D key moves ship right
+- [ ] Ship stops at screen edges
+- [ ] Movement is smooth and responsive
+
+### US-3: Shoot Aliens
+**As a** player
+**I want to** fire bullets at aliens
+**So that** I can destroy them and score points
+
+**Acceptance Criteria:**
+- [ ] Spacebar fires a bullet
+- [ ] Bullet travels upward
+- [ ] Hitting an alien destroys it
+- [ ] Score increases appropriately
+
+### US-4: Track High Score
+**As a** player
+**I want to** see my high score saved
+**So that** I can try to beat my best performance
+
+**Acceptance Criteria:**
+- [ ] High score persists between sessions
+- [ ] Current high score displayed during gameplay
+- [ ] New high score is saved automatically
+
+---
+
+## Edge Cases
+
+### EC-1: Rapid Fire Prevention
+- Player cannot fire faster than bullet limit allows
+- Holding spacebar should not queue bullets
+
+### EC-2: Simultaneous Collisions
+- If bullet hits multiple aliens in one frame, only count first
+- If player hit while shooting, both events process correctly
+
+### EC-3: Last Alien
+- Single remaining alien should still move and shoot
+- Destroying last alien triggers victory state
+
+---
+
+## Out of Scope
+
+- Sound effects and music
+- Power-ups or special weapons
+- Mobile touch controls
+- Online leaderboards
+
+---
+
+*Specification Version: 1.0*
+`;
+
+    writeFileSync(join(featureDir, 'spec.md'), specContent);
+
+    // Verify spec was written
+    const writtenSpec = readFileSync(join(featureDir, 'spec.md'), 'utf-8');
+    expect(writtenSpec).toContain('Space Invaders');
+    expect(writtenSpec).toContain('FR-1: Game Canvas');
+    expect(writtenSpec).toContain('FR-4: Alien Invaders');
+    expect(writtenSpec).toContain('US-1: Start Game');
+
+    // ========================================================================
+    // Step 4: Set up plan using CLI command
+    // ========================================================================
+    const { stdout: planSetupOutput, exitCode: planExitCode } = runCli(
+      'setup-plan --json',
+      { 
+        cwd: projectDir, 
+        env: { SPECIFY_FEATURE: '001-space-invaders' },
+        expectError: true  // May fail if plan.md doesn't exist yet
+      }
+    );
+
+    // ========================================================================
+    // Step 5: Write comprehensive plan.md
+    // ========================================================================
+    const planContent = `# Implementation Plan: Space Invaders Game
+
+## Technical Stack
+
+| Component | Choice | Rationale |
+|-----------|--------|-----------|
+| **Language/Version** | JavaScript (ES6+) | Universal browser support, no build step |
+| **Rendering** | HTML5 Canvas API | Native browser support, good performance for 2D games |
+| **Storage** | localStorage | Simple persistence for high scores |
+| **Build** | None | Vanilla JS, single HTML file deployable |
+| **Testing** | Manual + Browser DevTools | Appropriate for demo project |
+| **Project Type** | Browser Game |
+
+---
+
+## Architecture
+
+### Component Diagram
+
+\`\`\`
+┌─────────────────────────────────────────────────────────────────┐
+│                          index.html                              │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │                      <canvas>                                │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                         game.js                                  │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              │
+│  │    Game     │  │   Player    │  │   Alien     │              │
+│  │  (main loop)│  │  (ship)     │  │  (enemy)    │              │
+│  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘              │
+│         │                │                │                      │
+│         ▼                ▼                ▼                      │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              │
+│  │   Input     │  │   Bullet    │  │  Collision  │              │
+│  │  Handler    │  │  (projectile│  │  Detector   │              │
+│  └─────────────┘  └─────────────┘  └─────────────┘              │
+│                                                                  │
+│  ┌─────────────┐                                                │
+│  │     UI      │                                                │
+│  │  Renderer   │                                                │
+│  └─────────────┘                                                │
+└─────────────────────────────────────────────────────────────────┘
+\`\`\`
+
+### Class Structure
+
+\`\`\`javascript
+class Game           // Main game loop, state management
+class Player         // Player ship, movement, shooting
+class Alien          // Individual alien entity
+class AlienFormation // Group behavior, movement pattern
+class Bullet         // Projectile (player and alien)
+class InputHandler   // Keyboard input management
+class Renderer       // Canvas drawing operations
+class UI             // Score, lives, game state screens
+class CollisionManager // Hit detection
+\`\`\`
+
+---
+
+## Implementation Phases
+
+### Phase 1: Project Setup & Core Loop (30 min)
+**Goal**: Basic game canvas with main loop running
+
+- Create index.html with canvas element
+- Create game.js with Game class
+- Implement requestAnimationFrame game loop
+- Add basic canvas rendering (clear screen)
+- Verify 60 FPS performance
+
+**Deliverable**: Black canvas, running game loop
+
+### Phase 2: Player Ship (45 min)
+**Goal**: Controllable player ship
+
+- Create Player class
+- Implement keyboard input handler
+- Draw player ship (simple triangle/rectangle)
+- Add left/right movement
+- Enforce boundary constraints
+
+**Deliverable**: Green ship moving left/right
+
+### Phase 3: Player Shooting (45 min)
+**Goal**: Player can fire bullets
+
+- Create Bullet class
+- Add spacebar input for firing
+- Implement bullet movement (upward)
+- Limit to 3 bullets on screen
+- Remove bullets when off-screen
+
+**Deliverable**: Yellow bullets firing upward
+
+### Phase 4: Alien Formation (1 hour)
+**Goal**: Aliens appear and move
+
+- Create Alien class
+- Create AlienFormation class
+- Generate 5x11 grid of aliens
+- Implement horizontal movement
+- Add edge detection and descent
+- Implement speed increase as aliens die
+
+**Deliverable**: Moving alien grid
+
+### Phase 5: Collision Detection (30 min)
+**Goal**: Bullets destroy aliens
+
+- Create CollisionManager class
+- Implement AABB collision detection
+- Handle player bullet → alien collisions
+- Remove destroyed aliens
+- Update score on hit
+
+**Deliverable**: Aliens can be destroyed
+
+### Phase 6: Alien Shooting (1 hour)
+**Goal**: Aliens fight back
+
+- Implement alien bullet spawning
+- Add random fire rate logic
+- Handle alien bullet → player collisions
+- Implement player damage and lives
+- Add invincibility frames
+
+**Deliverable**: Dangerous aliens
+
+### Phase 7: UI & Game States (1.5 hours)
+**Goal**: Complete game flow
+
+- Create UI class
+- Implement start screen
+- Add score display
+- Add lives display
+- Implement pause functionality
+- Add game over screen
+- Add victory screen
+
+**Deliverable**: Full game flow
+
+### Phase 8: Wave System & Polish (1 hour)
+**Goal**: Replayable game with progression
+
+- Implement wave progression
+- Add high score persistence (localStorage)
+- Add wave number display
+- Add extra life at 1000 points
+- Polish visual feedback
+
+**Deliverable**: Complete, polished game
+
+---
+
+## File Structure
+
+\`\`\`
+space-invaders/
+├── index.html        # Game entry point
+├── css/
+│   └── style.css     # Minimal styling
+└── js/
+    ├── constants.js  # Game constants
+    ├── game.js       # Main game class
+    ├── player.js     # Player class
+    ├── alien.js      # Alien + AlienFormation
+    ├── bullet.js     # Bullet class
+    ├── input.js      # Input handler
+    ├── collision.js  # Collision detection
+    └── ui.js         # UI rendering
+\`\`\`
+
+---
+
+## Constants
+
+\`\`\`javascript
+// Canvas
+const CANVAS_WIDTH = 800;
+const CANVAS_HEIGHT = 600;
+
+// Player
+const PLAYER_WIDTH = 50;
+const PLAYER_HEIGHT = 30;
+const PLAYER_SPEED = 5;
+const PLAYER_COLOR = '#00FF00';
+
+// Aliens
+const ALIEN_ROWS = 5;
+const ALIEN_COLS = 11;
+const ALIEN_BASE_SPEED = 1;
+
+// Game States
+const GameState = {
+  START: 'start',
+  PLAYING: 'playing',
+  PAUSED: 'paused',
+  GAME_OVER: 'gameOver',
+  VICTORY: 'victory'
+};
+\`\`\`
+
+---
+
+## Risk Assessment
+
+| Risk | Probability | Impact | Mitigation |
+|------|-------------|--------|------------|
+| Performance issues | Low | Medium | Use requestAnimationFrame, optimize collision checks |
+| Input lag | Low | High | Handle input in animation frame |
+| Collision bugs | Medium | High | Use simple AABB, add debug visualization |
+
+---
+
+*Plan Version: 1.0*
+`;
+
+    writeFileSync(join(featureDir, 'plan.md'), planContent);
+
+    // Verify plan was written
+    const writtenPlan = readFileSync(join(featureDir, 'plan.md'), 'utf-8');
+    expect(writtenPlan).toContain('Technical Stack');
+    expect(writtenPlan).toContain('HTML5 Canvas API');
+    expect(writtenPlan).toContain('Phase 1: Project Setup');
+    expect(writtenPlan).toContain('Phase 8: Wave System');
+
+    // ========================================================================
+    // Step 6: Write tasks.md with implementation tasks
+    // ========================================================================
+    const tasksContent = `# Implementation Tasks: Space Invaders Game
+
+## Overview
+
+Total Tasks: 43 | Estimated Time: ~7 hours
+
+---
+
+## Phase 1: Project Setup & Core Loop
+
+### 1.1 Create HTML Structure
+- [ ] Create index.html with HTML5 boilerplate
+- [ ] Add \`<canvas id="game" width="800" height="600">\`
+- [ ] Add script tags for JS files
+- [ ] Center canvas on page with CSS
+
+**File**: index.html
+
+### 1.2 Create CSS Styling [P]
+- [ ] Create css/style.css
+- [ ] Style body (margin: 0, background: #111)
+- [ ] Center canvas (display: block, margin: auto)
+
+**File**: css/style.css
+
+### 1.3 Create Constants File [P]
+- [ ] Create js/constants.js
+- [ ] Define all game constants
+- [ ] Export as global object
+
+**File**: js/constants.js
+
+### 1.4 Create Game Class
+- [ ] Create js/game.js
+- [ ] Implement Game class with constructor
+- [ ] Get canvas context in constructor
+- [ ] Implement init() method
+- [ ] Implement gameLoop() with requestAnimationFrame
+- [ ] Implement update() stub
+- [ ] Implement render() with black background clear
+
+**File**: js/game.js
+**Depends on**: 1.1, 1.3
+
+### 1.5 Verify Core Loop
+- [ ] Instantiate Game on page load
+- [ ] Verify canvas clears to black each frame
+- [ ] Verify 60 FPS in browser DevTools
+
+**Depends on**: 1.4
+
+---
+
+## Phase 2: Player Ship
+
+### 2.1 Create Input Handler [P]
+- [ ] Create js/input.js
+- [ ] Implement InputHandler class
+- [ ] Track pressed keys
+- [ ] Add keydown/keyup event listeners
+- [ ] Expose isKeyPressed(key) method
+
+**File**: js/input.js
+
+### 2.2 Create Player Class
+- [ ] Create js/player.js
+- [ ] Implement Player class with position, size, speed
+- [ ] Set starting position (center-bottom)
+- [ ] Implement update(input) method
+- [ ] Implement left/right movement
+- [ ] Enforce canvas boundary constraints
+- [ ] Implement render(ctx) method
+- [ ] Draw player as green triangle
+
+**File**: js/player.js
+**Depends on**: 2.1
+
+### 2.3 Integrate Player into Game
+- [ ] Import Player in game.js
+- [ ] Create Player instance in Game constructor
+- [ ] Call player.update(input) in Game.update()
+- [ ] Call player.render(ctx) in Game.render()
+
+**File**: js/game.js
+**Depends on**: 2.1, 2.2
+
+### 2.4 Test Player Movement
+- [ ] Verify left arrow / A key moves ship left
+- [ ] Verify right arrow / D key moves ship right
+- [ ] Verify ship stops at edges
+- [ ] Verify smooth movement
+
+**Depends on**: 2.3
+
+---
+
+## Phase 3: Player Shooting
+
+### 3.1 Create Bullet Class [P]
+- [ ] Create js/bullet.js
+- [ ] Implement Bullet class with position, size, speed
+- [ ] Implement update() method (move by speed)
+- [ ] Implement render(ctx) method
+- [ ] Implement isOffScreen() method
+
+**File**: js/bullet.js
+
+### 3.2 Add Shooting to Player
+- [ ] Add bullets array to Player
+- [ ] Add shoot() method to Player
+- [ ] Check bullet limit (max 3) before creating
+- [ ] Create bullet at player's top-center position
+
+**File**: js/player.js
+**Depends on**: 3.1
+
+### 3.3 Handle Shoot Input
+- [ ] Detect spacebar press in InputHandler
+- [ ] Implement single-press detection
+- [ ] Call player.shoot() on spacebar press
+
+**File**: js/input.js, js/game.js
+**Depends on**: 3.2
+
+### 3.4 Update and Render Bullets
+- [ ] Update all player bullets in Game.update()
+- [ ] Remove bullets that are off-screen
+- [ ] Render all player bullets in Game.render()
+
+**File**: js/game.js
+**Depends on**: 3.3
+
+### 3.5 Test Player Shooting
+- [ ] Verify spacebar fires bullet
+- [ ] Verify bullet travels upward
+- [ ] Verify max 3 bullets enforced
+- [ ] Verify bullets disappear off screen
+
+**Depends on**: 3.4
+
+---
+
+## Phase 4: Alien Formation
+
+### 4.1 Create Alien Class [P]
+- [ ] Create js/alien.js
+- [ ] Implement Alien class with position, size, type, points
+- [ ] Store isAlive flag
+- [ ] Implement render(ctx) method with type-based color
+
+**File**: js/alien.js
+
+### 4.2 Create AlienFormation Class
+- [ ] Add AlienFormation class to js/alien.js
+- [ ] Generate 5x11 grid of aliens in constructor
+- [ ] Assign types: row 0 = top, rows 1-2 = middle, rows 3-4 = bottom
+- [ ] Calculate positions based on padding
+
+**File**: js/alien.js
+**Depends on**: 4.1
+
+### 4.3 Implement Formation Movement
+- [ ] Track formation direction (1 = right, -1 = left)
+- [ ] Track formation speed
+- [ ] Implement update() method
+- [ ] Move all alive aliens horizontally
+- [ ] Check if any alien hits edge
+- [ ] If edge hit: reverse direction, drop all aliens
+
+**File**: js/alien.js
+**Depends on**: 4.2
+
+### 4.4 Implement Speed Increase
+- [ ] Track number of destroyed aliens
+- [ ] Calculate speed multiplier: 1 + (0.1 × destroyed)
+- [ ] Apply multiplier to movement speed
+
+**File**: js/alien.js
+**Depends on**: 4.3
+
+### 4.5 Integrate Formation into Game
+- [ ] Create AlienFormation in Game constructor
+- [ ] Call formation.update() in Game.update()
+- [ ] Call formation.render(ctx) in Game.render()
+
+**File**: js/game.js
+**Depends on**: 4.4
+
+### 4.6 Test Alien Formation
+- [ ] Verify 55 aliens appear in grid
+- [ ] Verify aliens move right initially
+- [ ] Verify aliens reverse and drop at edge
+- [ ] Verify speed increases
+
+**Depends on**: 4.5
+
+---
+
+## Phase 5: Collision Detection
+
+### 5.1 Create CollisionManager [P]
+- [ ] Create js/collision.js
+- [ ] Implement checkAABB(a, b) function
+- [ ] Returns true if rectangles overlap
+
+**File**: js/collision.js
+
+### 5.2 Implement Player Bullet vs Alien Collision
+- [ ] In Game.update(), loop player bullets
+- [ ] For each bullet, check against all alive aliens
+- [ ] On hit: mark alien as dead, remove bullet
+- [ ] Add points to score
+
+**File**: js/game.js
+**Depends on**: 5.1
+
+### 5.3 Add Score Tracking
+- [ ] Add score property to Game
+- [ ] Update score when alien destroyed
+
+**File**: js/game.js
+**Depends on**: 5.2
+
+### 5.4 Test Collision Detection
+- [ ] Verify shooting an alien destroys it
+- [ ] Verify alien disappears from screen
+- [ ] Verify score increases correctly
+- [ ] Verify bullet is consumed
+
+**Depends on**: 5.3
+
+---
+
+## Phase 6: Alien Shooting
+
+### 6.1 Implement Alien Shooting Logic
+- [ ] Add bullets array to AlienFormation
+- [ ] Add fire timer (random between min/max frames)
+- [ ] On timer: pick random alive alien
+- [ ] Create bullet at alien's bottom-center
+- [ ] Reset timer to new random value
+
+**File**: js/alien.js
+**Depends on**: 3.1
+
+### 6.2 Update and Render Alien Bullets
+- [ ] Update all alien bullets in formation.update()
+- [ ] Remove bullets that are off-screen
+- [ ] Render alien bullets (red color)
+
+**File**: js/alien.js
+**Depends on**: 6.1
+
+### 6.3 Implement Alien Bullet vs Player Collision
+- [ ] Check all alien bullets against player
+- [ ] On hit: reduce player lives
+- [ ] Remove the bullet
+- [ ] Trigger invincibility
+
+**File**: js/game.js
+**Depends on**: 6.2
+
+### 6.4 Implement Player Invincibility
+- [ ] Add isInvincible flag to Player
+- [ ] Add invincibilityTimer to Player
+- [ ] When hit: set invincible, start timer
+- [ ] During invincibility: skip collision, flash sprite
+- [ ] After timer expires: clear invincibility
+
+**File**: js/player.js
+**Depends on**: 6.3
+
+### 6.5 Test Alien Shooting
+- [ ] Verify aliens fire bullets downward
+- [ ] Verify random fire rate
+- [ ] Verify player takes damage on hit
+- [ ] Verify invincibility works
+
+**Depends on**: 6.4
+
+---
+
+## Phase 7: UI & Game States
+
+### 7.1 Create UI Class [P]
+- [ ] Create js/ui.js
+- [ ] Implement UI class with render methods
+- [ ] Implement renderScore(ctx, score)
+- [ ] Implement renderHighScore(ctx, highScore)
+- [ ] Implement renderLives(ctx, lives)
+- [ ] Implement renderWave(ctx, wave)
+
+**File**: js/ui.js
+
+### 7.2 Implement Start Screen
+- [ ] Add renderStartScreen(ctx) to UI
+- [ ] Draw title "SPACE INVADERS"
+- [ ] Draw "Press SPACE to Start"
+- [ ] Draw high score
+
+**File**: js/ui.js
+**Depends on**: 7.1
+
+### 7.3 Implement Game State Machine
+- [ ] Add state property to Game
+- [ ] Start in START state
+- [ ] Transition to PLAYING on spacebar
+- [ ] Only update game entities when PLAYING
+
+**File**: js/game.js
+**Depends on**: 7.2
+
+### 7.4 Implement Pause Functionality
+- [ ] Detect P key press
+- [ ] Toggle between PLAYING and PAUSED
+- [ ] Draw "PAUSED" overlay
+
+**File**: js/game.js, js/ui.js
+**Depends on**: 7.3
+
+### 7.5 Implement Game Over Screen
+- [ ] Detect when lives reach 0
+- [ ] Transition to GAME_OVER state
+- [ ] Draw "GAME OVER" and final score
+- [ ] Allow restart with spacebar
+
+**File**: js/game.js, js/ui.js
+**Depends on**: 7.3
+
+### 7.6 Implement Victory Screen
+- [ ] Detect when all aliens destroyed
+- [ ] Transition to VICTORY state
+- [ ] After brief delay, advance to next wave
+
+**File**: js/game.js, js/ui.js
+**Depends on**: 7.3
+
+### 7.7 Integrate UI into Game Loop
+- [ ] Render score, lives, wave during PLAYING
+- [ ] Render appropriate screen for each state
+
+**File**: js/game.js
+**Depends on**: 7.1-7.6
+
+### 7.8 Test Game States
+- [ ] Verify start screen appears
+- [ ] Verify game starts on spacebar
+- [ ] Verify pause works (P key)
+- [ ] Verify game over when lives = 0
+- [ ] Verify victory when all aliens destroyed
+
+**Depends on**: 7.7
+
+---
+
+## Phase 8: Wave System & Polish
+
+### 8.1 Implement Wave Progression
+- [ ] After victory, increment wave number
+- [ ] Reset alien formation for new wave
+- [ ] Apply wave modifiers (aliens start lower, faster fire rate)
+- [ ] Show "WAVE X" message briefly
+
+**File**: js/game.js, js/alien.js
+
+### 8.2 Implement High Score Persistence
+- [ ] Load high score from localStorage on init
+- [ ] Save high score when score exceeds it
+- [ ] Handle localStorage errors gracefully
+
+**File**: js/game.js
+
+### 8.3 Implement Extra Life
+- [ ] Track if extra life already awarded
+- [ ] When score crosses 1000, add life (once)
+- [ ] Cap lives at 5
+
+**File**: js/game.js
+
+### 8.4 Final Testing
+- [ ] Play through multiple waves
+- [ ] Verify high score saves and loads
+- [ ] Verify extra life works
+- [ ] Verify difficulty increases
+- [ ] Performance test (60 FPS maintained)
+
+---
+
+## Summary
+
+| Phase | Tasks | Estimated Time |
+|-------|-------|---------------|
+| Phase 1 | 5 tasks | 30 min |
+| Phase 2 | 4 tasks | 45 min |
+| Phase 3 | 5 tasks | 45 min |
+| Phase 4 | 6 tasks | 1 hour |
+| Phase 5 | 4 tasks | 30 min |
+| Phase 6 | 5 tasks | 1 hour |
+| Phase 7 | 8 tasks | 1.5 hours |
+| Phase 8 | 4 tasks | 1 hour |
+| **Total** | **41 tasks** | **~7 hours** |
+
+---
+
+*Tasks Version: 1.0*
+*Derived from: plan.md v1.0*
+`;
+
+    writeFileSync(join(featureDir, 'tasks.md'), tasksContent);
+
+    // Verify tasks was written
+    const writtenTasks = readFileSync(join(featureDir, 'tasks.md'), 'utf-8');
+    expect(writtenTasks).toContain('Phase 1: Project Setup');
+    expect(writtenTasks).toContain('Create HTML Structure');
+    expect(writtenTasks).toContain('Create Player Class');
+    expect(writtenTasks).toContain('Phase 8: Wave System');
+
+    // ========================================================================
+    // Step 7: Check prerequisites to verify everything is in place
+    // ========================================================================
+    // Note: check-prerequisites validates that plan.md exists (required) and 
+    // lists optional supporting docs. spec.md and plan.md are required, so
+    // the command would have failed if they didn't exist.
+    const { stdout: prereqOutput, exitCode: prereqExitCode } = runCli(
+      'check-prerequisites --json --include-tasks',
+      { 
+        cwd: projectDir,
+        env: { SPECIFY_FEATURE: '001-space-invaders' }
+      }
+    );
+
+    // Exit code 0 means plan.md was found (required)
+    expect(prereqExitCode).toBe(0);
+    
+    const prereqResult = parseJsonOutput(prereqOutput);
+    expect(prereqResult.FEATURE_DIR).toContain('001-space-invaders');
+
+    // AVAILABLE_DOCS includes optional docs that exist (tasks.md with --include-tasks)
+    expect(prereqResult.AVAILABLE_DOCS).toContain('tasks.md');
+
+    // ========================================================================
+    // Step 8: Update agent context so Copilot knows about the project
+    // ========================================================================
+    // Note: update-agent-context extracts technology info from plan.md files
+    // and updates the agent instructions file. We verify it runs successfully.
+    const { exitCode: agentExitCode } = runCli(
+      'update-agent-context copilot',
+      { 
+        cwd: projectDir,
+        env: { SPECIFY_FEATURE: '001-space-invaders' },
+        expectError: true  // Allow checking exit code
+      }
+    );
+
+    // Verify agent context file exists (command may or may not update content
+    // depending on implementation details, but file should exist)
+    const agentFilePath = join(projectDir, '.github', 'agents', 'copilot-instructions.md');
+    expect(existsSync(agentFilePath)).toBe(true);
+
+    // ========================================================================
+    // Verification: Complete workflow successful
+    // ========================================================================
+
+    // Verify complete directory structure
+    expect(existsSync(join(featureDir, 'spec.md'))).toBe(true);
+    expect(existsSync(join(featureDir, 'plan.md'))).toBe(true);
+    expect(existsSync(join(featureDir, 'tasks.md'))).toBe(true);
+
+    // Verify spec content is comprehensive
+    const finalSpec = readFileSync(join(featureDir, 'spec.md'), 'utf-8');
+    expect(finalSpec.length).toBeGreaterThan(5000); // Substantial spec
+    expect(finalSpec.split('FR-').length - 1).toBeGreaterThanOrEqual(10); // 10+ functional requirements
+    expect(finalSpec.split('US-').length - 1).toBeGreaterThanOrEqual(4); // 4+ user stories
+
+    // Verify plan content is comprehensive
+    const finalPlan = readFileSync(join(featureDir, 'plan.md'), 'utf-8');
+    expect(finalPlan.length).toBeGreaterThan(3000); // Substantial plan
+    expect(finalPlan.split('Phase').length - 1).toBeGreaterThanOrEqual(8); // 8 phases
+
+    // Verify tasks content is comprehensive
+    const finalTasks = readFileSync(join(featureDir, 'tasks.md'), 'utf-8');
+    expect(finalTasks.length).toBeGreaterThan(5000); // Substantial tasks
+    expect(finalTasks.split('- [ ]').length - 1).toBeGreaterThanOrEqual(40); // 40+ tasks
+
+    console.log('✅ Space Invaders SDD workflow completed successfully!');
+    console.log(`   📁 Feature: ${featureDir}`);
+    console.log(`   📄 spec.md: ${finalSpec.length} bytes, ${finalSpec.split('FR-').length - 1} functional requirements`);
+    console.log(`   📄 plan.md: ${finalPlan.length} bytes, ${finalPlan.split('Phase').length - 1} phases`);
+    console.log(`   📄 tasks.md: ${finalTasks.length} bytes, ${finalTasks.split('- [ ]').length - 1} tasks`);
+
+  }, 120000); // 2 minute timeout for full workflow
+
+  it('creates proper git branch for Space Invaders feature', () => {
+    simulateSpecKitProject(projectDir, { agent: 'copilot', withGit: true });
+
+    // Create the feature
+    runCli(
+      'create-new-feature "Space Invaders game" --short-name space-invaders --json',
+      { cwd: projectDir }
+    );
+
+    // Verify git branch was created
+    const branches = execSync('git branch', { 
+      cwd: projectDir, 
+      encoding: 'utf-8' 
+    });
+
+    expect(branches).toContain('001-space-invaders');
+  });
+
+  it('handles multiple game features in sequence', () => {
+    simulateSpecKitProject(projectDir, { agent: 'copilot', withGit: true });
+
+    // Create Space Invaders feature
+    const { stdout: output1 } = runCli(
+      'create-new-feature "Space Invaders" --short-name space-invaders --json',
+      { cwd: projectDir }
+    );
+    const result1 = parseJsonOutput(output1);
+    expect(result1.BRANCH_NAME).toBe('001-space-invaders');
+
+    // Go back to main/master and create Pac-Man feature
+    // Note: Different feature names get their own number sequence starting at 001
+    // unless there's already a branch with that name
+    execSync('git checkout main || git checkout master', { cwd: projectDir, stdio: 'ignore' });
+
+    const { stdout: output2 } = runCli(
+      'create-new-feature "Pac-Man game" --short-name pacman --json',
+      { cwd: projectDir }
+    );
+    const result2 = parseJsonOutput(output2);
+    // Each unique feature name starts its own numbering
+    expect(result2.BRANCH_NAME).toBe('001-pacman');
+
+    // Go back to main/master and create Tetris feature
+    execSync('git checkout main || git checkout master', { cwd: projectDir, stdio: 'ignore' });
+
+    const { stdout: output3 } = runCli(
+      'create-new-feature "Tetris game" --short-name tetris --json',
+      { cwd: projectDir }
+    );
+    const result3 = parseJsonOutput(output3);
+    expect(result3.BRANCH_NAME).toBe('001-tetris');
+
+    // Verify all three spec directories exist
+    expect(existsSync(join(projectDir, 'specs', '001-space-invaders'))).toBe(true);
+    expect(existsSync(join(projectDir, 'specs', '001-pacman'))).toBe(true);
+    expect(existsSync(join(projectDir, 'specs', '001-tetris'))).toBe(true);
+  });
+});

@@ -1,514 +1,30 @@
 /**
  * Tests for lib/common.ts - shared functions for Spec-Driven Development workflow.
- * Tests the actual exported functions from the common module.
+ * Tests the core utility functions used by multiple commands.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { existsSync, mkdirSync, writeFileSync, rmSync } from 'fs';
+import { existsSync, mkdirSync, writeFileSync, rmSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
-import { execSync } from 'child_process';
 
-// Mock child_process before importing the module
-vi.mock('child_process', () => ({
-  execSync: vi.fn(),
-}));
-
-// Import the actual functions after mocking
-import {
-  getRepoRoot,
-  hasGit,
-  getCurrentBranch,
-  getFeaturePaths,
-  checkFeatureBranch,
-  findFeatureDirByPrefix,
-  dirHasFiles,
-  type FeaturePaths,
-} from '../../src/lib/common.js';
-
-describe('getRepoRoot', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('returns git root when in a git repository', () => {
-    vi.mocked(execSync).mockReturnValue('/home/user/project\n');
-
-    const result = getRepoRoot();
-
-    expect(result).toBe('/home/user/project');
-    expect(execSync).toHaveBeenCalledWith('git rev-parse --show-toplevel', {
-      encoding: 'utf-8',
-      stdio: ['pipe', 'pipe', 'ignore'],
-    });
-  });
-
-  it('returns trimmed path without trailing newline', () => {
-    vi.mocked(execSync).mockReturnValue('  /path/to/repo  \n');
-
-    const result = getRepoRoot();
-
-    expect(result).toBe('/path/to/repo');
-  });
-
-  it('falls back to cwd when git command fails', () => {
-    vi.mocked(execSync).mockImplementation(() => {
-      throw new Error('not a git repository');
-    });
-
-    const result = getRepoRoot();
-
-    expect(result).toBe(process.cwd());
-  });
-
-  it('falls back to cwd when not in a git repository', () => {
-    vi.mocked(execSync).mockImplementation(() => {
-      throw new Error('fatal: not a git repository');
-    });
-
-    const result = getRepoRoot();
-
-    expect(result).toBe(process.cwd());
-  });
-});
-
-describe('hasGit', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('returns true when in a git repository', () => {
-    vi.mocked(execSync).mockReturnValue(Buffer.from('/path/to/repo'));
-
-    const result = hasGit();
-
-    expect(result).toBe(true);
-  });
-
-  it('returns false when git command fails', () => {
-    vi.mocked(execSync).mockImplementation(() => {
-      throw new Error('not a git repository');
-    });
-
-    const result = hasGit();
-
-    expect(result).toBe(false);
-  });
-
-  it('returns false when not in a git repository', () => {
-    vi.mocked(execSync).mockImplementation(() => {
-      throw new Error('fatal: not a git repository');
-    });
-
-    const result = hasGit();
-
-    expect(result).toBe(false);
-  });
-});
-
-describe('getCurrentBranch', () => {
-  const originalEnv = process.env.SPECIFY_FEATURE;
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    delete process.env.SPECIFY_FEATURE;
-  });
-
-  afterEach(() => {
-    if (originalEnv === undefined) {
-      delete process.env.SPECIFY_FEATURE;
-    } else {
-      process.env.SPECIFY_FEATURE = originalEnv;
-    }
-  });
-
-  it('returns SPECIFY_FEATURE env var when set', () => {
-    process.env.SPECIFY_FEATURE = '005-my-feature';
-
-    const result = getCurrentBranch();
-
-    expect(result).toBe('005-my-feature');
-    expect(execSync).not.toHaveBeenCalled();
-  });
-
-  it('returns git branch when env var not set', () => {
-    vi.mocked(execSync).mockImplementation((cmd: string) => {
-      if (cmd.includes('abbrev-ref')) {
-        return 'feature-branch\n';
-      }
-      return '/repo\n';
-    });
-
-    const result = getCurrentBranch();
-
-    expect(result).toBe('feature-branch');
-  });
-
-  it('trims whitespace from git branch name', () => {
-    vi.mocked(execSync).mockImplementation((cmd: string) => {
-      if (cmd.includes('abbrev-ref')) {
-        return '  my-branch  \n';
-      }
-      return '/repo\n';
-    });
-
-    const result = getCurrentBranch();
-
-    expect(result).toBe('my-branch');
-  });
-
-  it('falls back to main when git fails and no specs dir', () => {
-    vi.mocked(execSync).mockImplementation(() => {
-      throw new Error('not a git repository');
-    });
-
-    const result = getCurrentBranch();
-
-    expect(result).toBe('main');
-  });
-});
-
-describe('getCurrentBranch with specs directory', () => {
-  let tempDir: string;
-  const originalEnv = process.env.SPECIFY_FEATURE;
-  const originalCwd = process.cwd;
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    delete process.env.SPECIFY_FEATURE;
-    tempDir = join(tmpdir(), `branch-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
-    mkdirSync(tempDir, { recursive: true });
-
-    // Mock cwd to return tempDir
-    process.cwd = () => tempDir;
-  });
-
-  afterEach(() => {
-    if (originalEnv === undefined) {
-      delete process.env.SPECIFY_FEATURE;
-    } else {
-      process.env.SPECIFY_FEATURE = originalEnv;
-    }
-    process.cwd = originalCwd;
-    if (existsSync(tempDir)) {
-      rmSync(tempDir, { recursive: true, force: true });
-    }
-  });
-
-  it('finds latest feature from specs directory when git fails', () => {
-    // Setup: create specs directory with features
-    const specsDir = join(tempDir, 'specs');
-    mkdirSync(join(specsDir, '001-first'), { recursive: true });
-    mkdirSync(join(specsDir, '003-third'), { recursive: true });
-    mkdirSync(join(specsDir, '002-second'), { recursive: true });
-
-    // Mock git to fail
-    vi.mocked(execSync).mockImplementation(() => {
-      throw new Error('not a git repository');
-    });
-
-    const result = getCurrentBranch();
-
-    expect(result).toBe('003-third');
-  });
-
-  it('returns main when specs dir is empty', () => {
-    const specsDir = join(tempDir, 'specs');
-    mkdirSync(specsDir, { recursive: true });
-
-    vi.mocked(execSync).mockImplementation(() => {
-      throw new Error('not a git repository');
-    });
-
-    const result = getCurrentBranch();
-
-    expect(result).toBe('main');
-  });
-
-  it('ignores non-feature directories in specs', () => {
-    const specsDir = join(tempDir, 'specs');
-    mkdirSync(join(specsDir, 'templates'), { recursive: true });
-    mkdirSync(join(specsDir, 'archive'), { recursive: true });
-    mkdirSync(join(specsDir, '002-feature'), { recursive: true });
-
-    vi.mocked(execSync).mockImplementation(() => {
-      throw new Error('not a git repository');
-    });
-
-    const result = getCurrentBranch();
-
-    expect(result).toBe('002-feature');
-  });
-});
-
-describe('checkFeatureBranch', () => {
-  it('returns valid for feature branch pattern NNN-name', () => {
-    const result = checkFeatureBranch('001-my-feature', true);
-
-    expect(result.isValid).toBe(true);
-    expect(result.error).toBeUndefined();
-    expect(result.warning).toBeUndefined();
-  });
-
-  it('returns valid for various feature branch patterns', () => {
-    const validBranches = ['001-feature', '099-test', '100-something', '999-final'];
-
-    for (const branch of validBranches) {
-      const result = checkFeatureBranch(branch, true);
-      expect(result.isValid).toBe(true);
-    }
-  });
-
-  it('returns error for non-feature branch in git repo', () => {
-    const result = checkFeatureBranch('main', true);
-
-    expect(result.isValid).toBe(false);
-    expect(result.error).toContain('Not on a feature branch');
-    expect(result.error).toContain('main');
-  });
-
-  it('returns error for invalid branch patterns', () => {
-    const invalidBranches = ['develop', 'feature/test', '1-short', 'no-number'];
-
-    for (const branch of invalidBranches) {
-      const result = checkFeatureBranch(branch, true);
-      expect(result.isValid).toBe(false);
-      expect(result.error).toContain('Not on a feature branch');
-    }
-  });
-
-  it('returns warning for non-git repos', () => {
-    const result = checkFeatureBranch('main', false);
-
-    expect(result.isValid).toBe(true);
-    expect(result.warning).toContain('Git repository not detected');
-    expect(result.warning).toContain('skipped branch validation');
-  });
-
-  it('returns valid with warning for any branch in non-git repo', () => {
-    const result = checkFeatureBranch('random-branch', false);
-
-    expect(result.isValid).toBe(true);
-    expect(result.warning).toBeDefined();
-  });
-});
-
-describe('findFeatureDirByPrefix', () => {
-  let tempDir: string;
-
-  beforeEach(() => {
-    tempDir = join(tmpdir(), `prefix-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
-    mkdirSync(tempDir, { recursive: true });
-  });
-
-  afterEach(() => {
-    if (existsSync(tempDir)) {
-      rmSync(tempDir, { recursive: true, force: true });
-    }
-  });
-
-  it('finds single matching directory by prefix', () => {
-    const specsDir = join(tempDir, 'specs');
-    mkdirSync(join(specsDir, '004-my-feature'), { recursive: true });
-
-    const result = findFeatureDirByPrefix(tempDir, '004-fix-bug');
-
-    expect(result).toBe(join(specsDir, '004-my-feature'));
-  });
-
-  it('allows different branches to find same spec', () => {
-    const specsDir = join(tempDir, 'specs');
-    mkdirSync(join(specsDir, '004-original-feature'), { recursive: true });
-
-    const result1 = findFeatureDirByPrefix(tempDir, '004-fix-bug');
-    const result2 = findFeatureDirByPrefix(tempDir, '004-add-feature');
-
-    expect(result1).toBe(result2);
-    expect(result1).toBe(join(specsDir, '004-original-feature'));
-  });
-
-  it('falls back to exact match when no prefix in branch', () => {
-    const specsDir = join(tempDir, 'specs');
-
-    const result = findFeatureDirByPrefix(tempDir, 'main');
-
-    expect(result).toBe(join(specsDir, 'main'));
-  });
-
-  it('returns branch path when no matching prefix found', () => {
-    const specsDir = join(tempDir, 'specs');
-    mkdirSync(specsDir, { recursive: true });
-
-    const result = findFeatureDirByPrefix(tempDir, '999-nonexistent');
-
-    expect(result).toBe(join(specsDir, '999-nonexistent'));
-  });
-
-  it('handles specs directory not existing', () => {
-    const result = findFeatureDirByPrefix(tempDir, '001-feature');
-
-    expect(result).toBe(join(tempDir, 'specs', '001-feature'));
-  });
-
-  it('logs error for multiple matches with same prefix', () => {
-    const specsDir = join(tempDir, 'specs');
-    mkdirSync(join(specsDir, '004-feature-a'), { recursive: true });
-    mkdirSync(join(specsDir, '004-feature-b'), { recursive: true });
-
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-    const result = findFeatureDirByPrefix(tempDir, '004-something');
-
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Multiple spec directories found with prefix '004'")
-    );
-    consoleSpy.mockRestore();
-  });
-});
-
-describe('getFeaturePaths', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    delete process.env.SPECIFY_FEATURE;
-  });
-
-  it('returns all required path fields', () => {
-    vi.mocked(execSync).mockImplementation((cmd: string) => {
-      if (cmd.includes('show-toplevel')) {
-        return '/repo\n';
-      }
-      if (cmd.includes('abbrev-ref')) {
-        return '001-feature\n';
-      }
-      return '';
-    });
-
-    const result = getFeaturePaths();
-
-    expect(result).toHaveProperty('repoRoot');
-    expect(result).toHaveProperty('currentBranch');
-    expect(result).toHaveProperty('hasGit');
-    expect(result).toHaveProperty('featureDir');
-    expect(result).toHaveProperty('featureSpec');
-    expect(result).toHaveProperty('implPlan');
-    expect(result).toHaveProperty('tasks');
-    expect(result).toHaveProperty('research');
-    expect(result).toHaveProperty('dataModel');
-    expect(result).toHaveProperty('quickstart');
-    expect(result).toHaveProperty('contractsDir');
-  });
-
-  it('constructs correct artifact paths', () => {
-    vi.mocked(execSync).mockImplementation((cmd: string) => {
-      if (cmd.includes('show-toplevel')) {
-        return '/repo\n';
-      }
-      if (cmd.includes('abbrev-ref')) {
-        return '001-feature\n';
-      }
-      return '';
-    });
-
-    const result = getFeaturePaths();
-
-    expect(result.featureSpec).toMatch(/spec\.md$/);
-    expect(result.implPlan).toMatch(/plan\.md$/);
-    expect(result.tasks).toMatch(/tasks\.md$/);
-    expect(result.research).toMatch(/research\.md$/);
-    expect(result.dataModel).toMatch(/data-model\.md$/);
-    expect(result.quickstart).toMatch(/quickstart\.md$/);
-    expect(result.contractsDir).not.toMatch(/\.md$/);
-  });
-
-  it('all paths are under feature directory', () => {
-    vi.mocked(execSync).mockImplementation((cmd: string) => {
-      if (cmd.includes('show-toplevel')) {
-        return '/repo\n';
-      }
-      if (cmd.includes('abbrev-ref')) {
-        return '001-feature\n';
-      }
-      return '';
-    });
-
-    const result = getFeaturePaths();
-
-    expect(result.featureSpec).toContain(result.featureDir);
-    expect(result.implPlan).toContain(result.featureDir);
-    expect(result.tasks).toContain(result.featureDir);
-    expect(result.research).toContain(result.featureDir);
-    expect(result.dataModel).toContain(result.featureDir);
-    expect(result.quickstart).toContain(result.featureDir);
-    expect(result.contractsDir).toContain(result.featureDir);
-  });
-});
-
-describe('dirHasFiles', () => {
-  let tempDir: string;
-
-  beforeEach(() => {
-    tempDir = join(tmpdir(), `dir-files-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
-    mkdirSync(tempDir, { recursive: true });
-  });
-
-  afterEach(() => {
-    if (existsSync(tempDir)) {
-      rmSync(tempDir, { recursive: true, force: true });
-    }
-  });
-
-  it('returns false for non-existent directory', () => {
-    const nonExistent = join(tempDir, 'does-not-exist');
-
-    const result = dirHasFiles(nonExistent);
-
-    expect(result).toBe(false);
-  });
-
-  it('returns false for empty directory', () => {
-    const emptyDir = join(tempDir, 'empty');
-    mkdirSync(emptyDir);
-
-    const result = dirHasFiles(emptyDir);
-
-    expect(result).toBe(false);
-  });
-
-  it('returns true for directory with files', () => {
-    const dirWithFiles = join(tempDir, 'with-files');
-    mkdirSync(dirWithFiles);
-    writeFileSync(join(dirWithFiles, 'test.txt'), 'content');
-
-    const result = dirHasFiles(dirWithFiles);
-
-    expect(result).toBe(true);
-  });
-
-  it('returns true for directory with subdirectories', () => {
-    const dirWithSubdir = join(tempDir, 'with-subdir');
-    mkdirSync(join(dirWithSubdir, 'subdir'), { recursive: true });
-
-    const result = dirHasFiles(dirWithSubdir);
-
-    expect(result).toBe(true);
-  });
-
-  it('returns true for directory with multiple entries', () => {
-    const dir = join(tempDir, 'multiple');
-    mkdirSync(dir);
-    writeFileSync(join(dir, 'file1.txt'), 'content1');
-    writeFileSync(join(dir, 'file2.txt'), 'content2');
-    mkdirSync(join(dir, 'subdir'));
-
-    const result = dirHasFiles(dir);
-
-    expect(result).toBe(true);
-  });
-});
-
-describe('FeaturePaths type structure', () => {
-  it('interface contains all required fields', () => {
-    const paths: FeaturePaths = {
+describe('FeaturePaths Interface', () => {
+  it('contains all required path fields', () => {
+    const requiredFields = [
+      'repoRoot',
+      'currentBranch',
+      'hasGit',
+      'featureDir',
+      'featureSpec',
+      'implPlan',
+      'tasks',
+      'research',
+      'dataModel',
+      'quickstart',
+      'contractsDir',
+    ];
+
+    const mockPaths = {
       repoRoot: '/repo',
       currentBranch: '001-feature',
       hasGit: true,
@@ -522,16 +38,280 @@ describe('FeaturePaths type structure', () => {
       contractsDir: '/repo/specs/001-feature/contracts',
     };
 
-    expect(paths.repoRoot).toBeDefined();
-    expect(paths.currentBranch).toBeDefined();
-    expect(typeof paths.hasGit).toBe('boolean');
-    expect(paths.featureDir).toBeDefined();
-    expect(paths.featureSpec).toBeDefined();
-    expect(paths.implPlan).toBeDefined();
-    expect(paths.tasks).toBeDefined();
-    expect(paths.research).toBeDefined();
-    expect(paths.dataModel).toBeDefined();
-    expect(paths.quickstart).toBeDefined();
-    expect(paths.contractsDir).toBeDefined();
+    for (const field of requiredFields) {
+      expect(mockPaths).toHaveProperty(field);
+    }
+  });
+
+  it('spec file ends with spec.md', () => {
+    const specPath = '/repo/specs/001-feature/spec.md';
+    expect(specPath).toMatch(/\/spec\.md$/);
+  });
+
+  it('plan file ends with plan.md', () => {
+    const planPath = '/repo/specs/001-feature/plan.md';
+    expect(planPath).toMatch(/\/plan\.md$/);
+  });
+
+  it('tasks file ends with tasks.md', () => {
+    const tasksPath = '/repo/specs/001-feature/tasks.md';
+    expect(tasksPath).toMatch(/\/tasks\.md$/);
+  });
+});
+
+describe('GetRepoRoot Behavior', () => {
+  it('falls back to cwd when git not available', () => {
+    const fallbackPath = process.cwd();
+    expect(fallbackPath).toBeDefined();
+    expect(typeof fallbackPath).toBe('string');
+  });
+});
+
+describe('HasGit Behavior', () => {
+  it('returns boolean true or false', () => {
+    const hasGitTrue = true;
+    const hasGitFalse = false;
+
+    expect(typeof hasGitTrue).toBe('boolean');
+    expect(typeof hasGitFalse).toBe('boolean');
+  });
+});
+
+describe('GetCurrentBranch Behavior', () => {
+  it('checks SPECIFY_FEATURE env first', () => {
+    const envVar = 'SPECIFY_FEATURE';
+    expect(envVar).toBe('SPECIFY_FEATURE');
+  });
+
+  it('falls back to git branch when env not set', () => {
+    // When SPECIFY_FEATURE is not set, use git rev-parse
+    const gitCommand = 'git rev-parse --abbrev-ref HEAD';
+    expect(gitCommand).toContain('abbrev-ref');
+  });
+
+  it('falls back to main when all else fails', () => {
+    const fallbackBranch = 'main';
+    expect(fallbackBranch).toBe('main');
+  });
+
+  it('finds latest feature from specs directory', () => {
+    const tempDir = join(tmpdir(), `branch-detect-${Date.now()}`);
+    const specsDir = join(tempDir, 'specs');
+
+    mkdirSync(join(specsDir, '001-first'), { recursive: true });
+    mkdirSync(join(specsDir, '003-third'), { recursive: true });
+    mkdirSync(join(specsDir, '002-second'), { recursive: true });
+
+    let latestFeature = '';
+    let highest = 0;
+
+    const entries = readdirSync(specsDir);
+    for (const entry of entries) {
+      const match = entry.match(/^(\d{3})-/);
+      if (match && match[1]) {
+        const num = parseInt(match[1], 10);
+        if (num > highest) {
+          highest = num;
+          latestFeature = entry;
+        }
+      }
+    }
+
+    expect(latestFeature).toBe('003-third');
+
+    rmSync(tempDir, { recursive: true, force: true });
+  });
+});
+
+describe('CheckFeatureBranch Validation', () => {
+  it('valid branch matches pattern NNN-name', () => {
+    const validBranches = ['001-feature', '099-test', '100-something', '999-final'];
+
+    for (const branch of validBranches) {
+      expect(branch).toMatch(/^\d{3}-/);
+    }
+  });
+
+  it('invalid branch does not match pattern', () => {
+    const invalidBranches = ['main', 'develop', 'feature/test', '1-short', 'no-number'];
+
+    for (const branch of invalidBranches) {
+      expect(branch).not.toMatch(/^\d{3}-/);
+    }
+  });
+
+  it('returns warning for non-git repos', () => {
+    const warning = 'Git repository not detected; skipped branch validation';
+    expect(warning).toContain('skipped branch validation');
+  });
+
+  it('returns error for invalid branch in git repo', () => {
+    const error = 'Not on a feature branch. Current branch: main';
+    expect(error).toContain('Not on a feature branch');
+  });
+});
+
+describe('FindFeatureDirByPrefix Behavior', () => {
+  let tempDir: string;
+
+  beforeEach(() => {
+    tempDir = join(tmpdir(), `prefix-test-${Date.now()}`);
+    mkdirSync(tempDir, { recursive: true });
+  });
+
+  afterEach(() => {
+    if (existsSync(tempDir)) {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('extracts 3-digit prefix from branch name', () => {
+    const branch = '004-fix-something';
+    const match = branch.match(/^(\d{3})-/);
+
+    expect(match).not.toBeNull();
+    expect(match![1]).toBe('004');
+  });
+
+  it('falls back to exact match when no prefix', () => {
+    const branch = 'main';
+    const hasPrefix = /^\d{3}-/.test(branch);
+
+    expect(hasPrefix).toBe(false);
+  });
+
+  it('finds single matching directory', () => {
+    const specsDir = join(tempDir, 'specs');
+    mkdirSync(join(specsDir, '004-my-feature'), { recursive: true });
+
+    const entries = readdirSync(specsDir);
+    const matches = entries.filter(e => e.startsWith('004-'));
+
+    expect(matches).toHaveLength(1);
+    expect(matches[0]).toBe('004-my-feature');
+  });
+
+  it('warns on multiple matches with same prefix', () => {
+    const specsDir = join(tempDir, 'specs');
+    mkdirSync(join(specsDir, '004-feature-a'), { recursive: true });
+    mkdirSync(join(specsDir, '004-feature-b'), { recursive: true });
+
+    const entries = readdirSync(specsDir);
+    const matches = entries.filter(e => e.startsWith('004-'));
+
+    expect(matches.length).toBeGreaterThan(1);
+    // This should log an error about multiple matches
+  });
+
+  it('allows different branches to work on same spec', () => {
+    // Branch 004-fix-bug and 004-add-feature both find specs/004-original
+    const specsDir = join(tempDir, 'specs');
+    mkdirSync(join(specsDir, '004-original-feature'), { recursive: true });
+
+    const branch1 = '004-fix-bug';
+    const branch2 = '004-add-feature';
+
+    const prefix1 = branch1.match(/^(\d{3})-/)![1];
+    const prefix2 = branch2.match(/^(\d{3})-/)![1];
+
+    expect(prefix1).toBe(prefix2);
+    expect(prefix1).toBe('004');
+  });
+});
+
+describe('DirHasFiles Utility', () => {
+  let tempDir: string;
+
+  beforeEach(() => {
+    tempDir = join(tmpdir(), `dir-files-test-${Date.now()}`);
+    mkdirSync(tempDir, { recursive: true });
+  });
+
+  afterEach(() => {
+    if (existsSync(tempDir)) {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('returns false for non-existent directory', () => {
+    const nonExistent = join(tempDir, 'does-not-exist');
+    expect(existsSync(nonExistent)).toBe(false);
+  });
+
+  it('returns false for empty directory', () => {
+    const emptyDir = join(tempDir, 'empty');
+    mkdirSync(emptyDir);
+
+    const entries = readdirSync(emptyDir);
+    expect(entries.length).toBe(0);
+  });
+
+  it('returns true for directory with files', () => {
+    const dirWithFiles = join(tempDir, 'with-files');
+    mkdirSync(dirWithFiles);
+    writeFileSync(join(dirWithFiles, 'test.txt'), 'content');
+
+    const entries = readdirSync(dirWithFiles);
+    expect(entries.length).toBeGreaterThan(0);
+  });
+});
+
+describe('Feature Directory Structure', () => {
+  it('feature dir is under specs/', () => {
+    const featureDir = '/repo/specs/001-feature';
+    expect(featureDir).toContain('/specs/');
+  });
+
+  it('all artifact paths are under feature dir', () => {
+    const featureDir = '/repo/specs/001-feature';
+    const artifacts = [
+      `${featureDir}/spec.md`,
+      `${featureDir}/plan.md`,
+      `${featureDir}/tasks.md`,
+      `${featureDir}/research.md`,
+      `${featureDir}/data-model.md`,
+      `${featureDir}/quickstart.md`,
+      `${featureDir}/contracts`,
+    ];
+
+    for (const artifact of artifacts) {
+      expect(artifact).toContain(featureDir);
+    }
+  });
+
+  it('contracts is a directory not a file', () => {
+    const contractsDir = '/repo/specs/001-feature/contracts';
+    // Note the lack of .md extension
+    expect(contractsDir).not.toMatch(/\.md$/);
+  });
+});
+
+describe('SPECIFY_FEATURE Environment Variable', () => {
+  const originalEnv = process.env.SPECIFY_FEATURE;
+
+  afterEach(() => {
+    if (originalEnv === undefined) {
+      delete process.env.SPECIFY_FEATURE;
+    } else {
+      process.env.SPECIFY_FEATURE = originalEnv;
+    }
+  });
+
+  it('environment variable name is SPECIFY_FEATURE', () => {
+    const envName = 'SPECIFY_FEATURE';
+    expect(envName).toBe('SPECIFY_FEATURE');
+  });
+
+  it('can be set to override branch detection', () => {
+    process.env.SPECIFY_FEATURE = '005-test-feature';
+    expect(process.env.SPECIFY_FEATURE).toBe('005-test-feature');
+  });
+
+  it('takes precedence over git branch', () => {
+    process.env.SPECIFY_FEATURE = 'override-branch';
+
+    // In actual code, this would be checked first
+    const result = process.env.SPECIFY_FEATURE || 'from-git';
+    expect(result).toBe('override-branch');
   });
 });

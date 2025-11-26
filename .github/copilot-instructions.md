@@ -223,40 +223,13 @@ npm run format       # Prettier
 - Add JSDoc comments for public APIs
 - Keep functions focused and small
 
-### Testing Guidelines (Martin Fowler's Test Pyramid)
+### Testing Guidelines
 
-Follow the [Test Pyramid](https://martinfowler.com/articles/practical-test-pyramid.html) principles.
-For detailed testing patterns, see [testing.instructions.md](testing.instructions.md).
-
-1. **Write tests with different granularity** - Unit, Integration, and E2E tests
-2. **The higher you go, the fewer tests you should have** - Many unit tests, some integration tests, few E2E tests
-3. **Push tests as far down the pyramid as you can** - Prefer unit tests over integration tests when possible
-
-**Unit Tests** (`tests/lib/`):
-- Test individual functions and classes in isolation
-- Use mocks/stubs for external dependencies (Test Doubles)
-- Should be fast (thousands in minutes) and deterministic
-- Follow "Arrange, Act, Assert" or "Given, When, Then" structure
-- Test observable behavior, not implementation details
-
-**Integration Tests** (`tests/commands/`):
-- Test integration points with external systems (GitHub API, file system, git)
-- Use narrow integration tests - one integration point at a time
-- Mock external services with tools like Wiremock patterns
-- Write integration tests for all serialization/deserialization boundaries
-
-**End-to-End Tests** (`tests/e2e/`):
-- Test complete user journeys through the CLI
-- Completeness over speed - tests can run as long as needed
-- Must be reliable and deterministic (no flaky tests)
-- Cover all critical user workflows for shipping confidence
-
-**Test Code Quality**:
-- Test code is as important as production code
-- Test one condition per test
-- Avoid test duplication across pyramid layers
-- If a higher-level test fails, write a lower-level test to catch it
-- Eliminate redundant high-level tests that are covered at lower levels
+- Write tests alongside implementation
+- Mock external dependencies (GitHub API, file system)
+- Test both success and error paths
+- Use descriptive test names
+- Group related tests with `describe` blocks
 
 ---
 

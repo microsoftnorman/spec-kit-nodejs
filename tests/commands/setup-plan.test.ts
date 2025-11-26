@@ -8,19 +8,6 @@ import { existsSync, mkdirSync, writeFileSync, rmSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 
-describe('SetupPlan Command Behavior', () => {
-  it('shows banner at start (unless --json mode)', () => {
-    // The setup-plan command displays ASCII banner
-    // unless --json flag is provided
-    expect(true).toBe(true);
-  });
-
-  it('skips banner in JSON mode for clean output', () => {
-    // When --json is passed, banner is suppressed
-    expect(true).toBe(true);
-  });
-});
-
 describe('SetupPlan Output Format', () => {
   it('JSON output contains required fields', () => {
     const expectedFields = ['FEATURE_DIR', 'PLAN_FILE'];

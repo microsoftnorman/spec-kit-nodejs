@@ -9,7 +9,6 @@
 import { existsSync, mkdirSync, copyFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { getFeaturePaths, checkFeatureBranch } from '../lib/common.js';
-import { showBanner } from '../lib/ui/banner.js';
 
 /**
  * Options for setup-plan command
@@ -37,11 +36,6 @@ interface SetupPlanOutput {
  */
 export async function setupPlan(options: SetupPlanOptions): Promise<void> {
   const jsonMode = options.json ?? false;
-
-  // Show banner unless in JSON mode
-  if (!jsonMode) {
-    showBanner();
-  }
 
   // Get feature paths
   const paths = getFeaturePaths();

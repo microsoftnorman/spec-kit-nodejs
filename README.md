@@ -139,109 +139,6 @@ spec-kit-nodejs/
 └── bin/                      # Executable
 ```
 
-## Document Hierarchy
-
-Spec Kit uses a structured document hierarchy for Spec-Driven Development:
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           SPEC KIT DOCUMENT HIERARCHY                        │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-                         ┌──────────────────────┐
-                         │    CONSTITUTION      │  ← Project-wide rules
-                         │  memory/constitution │     (non-negotiable)
-                         │        .md           │
-                         └──────────┬───────────┘
-                                    │ governs all features
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              PER-FEATURE DOCS                                │
-│                        specs/{NNN-feature-name}/                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                    │
-        ┌───────────────────────────┼───────────────────────────┐
-        │                           │                           │
-        ▼                           ▼                           ▼
-┌───────────────┐          ┌───────────────┐          ┌───────────────┐
-│   spec.md     │ ───────▶ │   plan.md     │ ───────▶ │   tasks.md    │
-│               │          │               │          │               │
-│ WHAT & WHY    │          │ HOW           │          │ DO            │
-│               │          │               │          │               │
-│ • Overview    │          │ • Tech stack  │          │ • Task IDs    │
-│ • User stories│          │ • Architecture│          │ • Phases      │
-│ • Functional  │          │ • Data model  │          │ • Parallelism │
-│   requirements│          │ • Phases      │          │ • File paths  │
-│ • Non-func    │          │ • Constraints │          │ • Checkboxes  │
-│   requirements│          │               │          │               │
-│ • Edge cases  │          │               │          │               │
-└───────────────┘          └───────┬───────┘          └───────────────┘
-       │                           │                         │
-       │ /speckit.specify          │ /speckit.plan           │ /speckit.tasks
-       │                           │                         │
-       │                           ▼                         │
-       │                  ┌─────────────────┐                │
-       │                  │ SUPPORTING DOCS │                │
-       │                  │   (optional)    │                │
-       │                  ├─────────────────┤                │
-       │                  │ • research.md   │                │
-       │                  │ • data-model.md │                │
-       │                  │ • contracts/    │                │
-       │                  │ • quickstart.md │                │
-       │                  └─────────────────┘                │
-       │                                                     │
-       └──────────────────────┬──────────────────────────────┘
-                              │
-                              ▼
-                    ┌───────────────────┐
-                    │  /speckit.analyze │  ← Cross-artifact validation
-                    └─────────┬─────────┘
-                              │
-                              ▼
-                    ┌───────────────────┐
-                    │ /speckit.implement│  ← Code generation
-                    └─────────┬─────────┘
-                              │
-                              ▼
-                    ┌───────────────────┐
-                    │    ACTUAL CODE    │
-                    └───────────────────┘
-```
-
-### Document Purpose Summary
-
-| Document | Purpose | Created By | Depends On |
-|----------|---------|------------|------------|
-| `constitution.md` | Immutable project rules | Manual | Nothing |
-| `spec.md` | WHAT to build & WHY | `/speckit.specify` | Constitution |
-| `plan.md` | HOW to build it | `/speckit.plan` | spec.md |
-| `research.md` | Technical research | `/speckit.plan` | spec.md |
-| `data-model.md` | Data entities | `/speckit.plan` | spec.md |
-| `contracts/` | API specs | `/speckit.plan` | spec.md |
-| `tasks.md` | Actionable work items | `/speckit.tasks` | plan.md |
-| `checklist.md` | Implementation checklist | `/speckit.checklist` | tasks.md |
-
-### File Locations
-
-```
-project-root/
-├── memory/
-│   └── constitution.md          ← Project principles
-├── specs/
-│   ├── 001-user-auth/
-│   │   ├── spec.md              ← Feature specification
-│   │   ├── plan.md              ← Implementation plan
-│   │   ├── tasks.md             ← Task breakdown
-│   │   ├── research.md          ← Technical research (optional)
-│   │   ├── data-model.md        ← Data entities (optional)
-│   │   └── contracts/           ← API contracts (optional)
-│   └── 002-payment-system/
-│       └── ...
-├── .specify/
-│   └── templates/               ← Templates for new features
-└── CLAUDE.md / GEMINI.md        ← Agent context files
-```
-
 ## Documentation
 
 - [Installation Guide](docs/installation.md)
@@ -267,6 +164,30 @@ project-root/
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgments
+
+- Original Python implementation: [github/spec-kit](https://github.com/github/spec-kit)
+- Spec-Driven Development methodology by GitHub
+
+---
+
+Made with ❤️ by GitHub
+
+## 👥 Maintainers
+
+- Den Delimarsky ([@localden](https://github.com/localden))
+- John Lam ([@jflam](https://github.com/jflam))
+
+## 💬 Support
+
+For support, please open a [GitHub issue](https://github.com/github/spec-kit/issues/new). We welcome bug reports, feature requests, and questions about using Spec-Driven Development.
+
+## 🙏 Acknowledgements
+
+This project is heavily influenced by and based on the work and research of [John Lam](https://github.com/jflam).
+
+## 📄 License
+
+This project is licensed under the terms of the MIT open source license. Please refer to the [LICENSE](./LICENSE) file for the full terms.
 
 - Original Python implementation: [github/spec-kit](https://github.com/github/spec-kit)
 - Spec-Driven Development methodology by GitHub

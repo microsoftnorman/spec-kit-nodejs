@@ -207,15 +207,15 @@ describe('Init Command with --script js', () => {
     });
 
     const commandFiles = [
-      'speckit.analyze.agent.md',
-      'speckit.checklist.agent.md',
-      'speckit.clarify.agent.md',
-      'speckit.constitution.agent.md',
-      'speckit.implement.agent.md',
-      'speckit.plan.agent.md',
-      'speckit.specify.agent.md',
-      'speckit.tasks.agent.md',
-      'speckit.taskstoissues.agent.md',
+      'analyze.md',
+      'checklist.md',
+      'clarify.md',
+      'constitution.md',
+      'implement.md',
+      'plan.md',
+      'specify.md',
+      'tasks.md',
+      'taskstoissues.md',
     ];
 
     it('creates all command files', () => {
@@ -225,12 +225,13 @@ describe('Init Command with --script js', () => {
       }
     });
 
-    it('creates command files for copilot', () => {
-      const filePath = join(projectDir, '.github', 'agents', 'speckit.specify.agent.md');
+    it('creates copilot-instructions.md', () => {
+      const filePath = join(projectDir, '.github', 'agents', 'copilot-instructions.md');
       expect(existsSync(filePath)).toBe(true);
 
       const content = readFileSync(filePath, 'utf-8');
-      expect(content).toContain('description:');
+      expect(content).toContain('GitHub Copilot');
+      expect(content).toContain('Spec-Driven Development');
     });
   });
 
@@ -244,11 +245,10 @@ describe('Init Command with --script js', () => {
       expect(existsSync(filePath)).toBe(true);
     });
 
-    it('constitution.md contains expected content', () => {
+    it('constitution.md contains SDD methodology', () => {
       const content = readFileSync(join(projectDir, 'memory', 'constitution.md'), 'utf-8');
-      // The template uses [PROJECT_NAME] Constitution and Core Principles
-      expect(content).toContain('Constitution');
-      expect(content).toContain('Core Principles');
+      expect(content).toContain('Project Constitution');
+      expect(content).toContain('Spec-Driven Development');
     });
   });
 
@@ -271,9 +271,8 @@ describe('Init Command with --script js', () => {
       const content = readFileSync(join(projectDir, '.vscode', 'settings.json'), 'utf-8');
       const settings = JSON.parse(content);
 
-      // Check for prompt file recommendations
-      expect(settings['chat.promptFilesRecommendations']).toBeDefined();
-      expect(settings['chat.promptFilesRecommendations']['speckit.specify']).toBe(true);
+      expect(settings['chat.commandCenter.enabled']).toBe(true);
+      expect(settings['github.copilot.chat.codeGeneration.useInstructionFiles']).toBe(true);
     });
   });
 
@@ -430,22 +429,14 @@ describe('Init Command with --script js', () => {
       expect(content).toContain('Constitution');
     });
 
-    it('command files are created with proper format', () => {
-      // Check for command files in agent directory
-      const specifyCmd = join(projectDir, '.github', 'agents', 'speckit.specify.agent.md');
-      expect(existsSync(specifyCmd)).toBe(true);
-      
-      const content = readFileSync(specifyCmd, 'utf-8');
-      expect(content).toContain('description:');
-      expect(content).toContain('npx specify');
-    });
+    it('copilot-instructions.md has workflow documentation', () => {
+      const content = readFileSync(
+        join(projectDir, '.github', 'agents', 'copilot-instructions.md'),
+        'utf-8'
+      );
 
-    it('copilot prompts directory is created', () => {
-      const promptsDir = join(projectDir, '.github', 'prompts');
-      expect(existsSync(promptsDir)).toBe(true);
-      
-      const promptFile = join(promptsDir, 'speckit.specify.prompt.md');
-      expect(existsSync(promptFile)).toBe(true);
+      expect(content).toContain('Copilot');
+      expect(content).toContain('Spec-Driven Development');
     });
   });
 

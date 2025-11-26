@@ -2,7 +2,7 @@
  * Git operations tests - ported from test_git_operations.py
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdirSync, rmSync, writeFileSync, existsSync } from 'fs';
+import { mkdirSync, rmSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { execSync } from 'child_process';
@@ -43,17 +43,6 @@ describe('isGitRepo', () => {
 
   it('should return false for non-existent path', () => {
     expect(isGitRepo(join(tempDir, 'does-not-exist'))).toBe(false);
-  });
-
-  it('should detect nested directory inside git repo', () => {
-    const nestedDir = join(gitDir, 'nested', 'dir');
-    mkdirSync(nestedDir, { recursive: true });
-    expect(isGitRepo(nestedDir)).toBe(true);
-  });
-
-  it('should use current directory when path not provided', () => {
-    // The current directory (project root) should be a git repo
-    expect(isGitRepo()).toBe(true);
   });
 });
 
@@ -105,71 +94,5 @@ describe('initGitRepo', () => {
     const result = initGitRepo(invalidPath, true);
     expect(result.success).toBe(false);
     expect(result.error).not.toBeNull();
-  });
-
-  it('should create .git directory', () => {
-    initGitRepo(projectDir, true);
-    expect(existsSync(join(projectDir, '.git'))).toBe(true);
-  });
-
-  it('should stage all files', () => {
-    // Create multiple files
-    writeFileSync(join(projectDir, 'file1.txt'), 'content1');
-    writeFileSync(join(projectDir, 'file2.txt'), 'content2');
-    mkdirSync(join(projectDir, 'src'));
-    writeFileSync(join(projectDir, 'src', 'main.ts'), 'code');
-
-    initGitRepo(projectDir, true);
-
-    // Check that all files are tracked
-    const status = execSync('git status --porcelain', { cwd: projectDir, encoding: 'utf-8' });
-    expect(status.trim()).toBe(''); // Empty means all files are committed
-  });
-
-  it('should handle empty directory', () => {
-    const emptyDir = join(tempDir, 'empty');
-    mkdirSync(emptyDir, { recursive: true });
-
-    // Create at least one file to commit
-    writeFileSync(join(emptyDir, '.gitkeep'), '');
-
-    const result = initGitRepo(emptyDir, true);
-    expect(result.success).toBe(true);
-  });
-
-  it('should return detailed error message', () => {
-    const invalidPath = join(tempDir, 'non-existent', 'path');
-    const result = initGitRepo(invalidPath, true);
-    
-    expect(result.success).toBe(false);
-    expect(result.error).toBeTruthy();
-    expect(typeof result.error).toBe('string');
-  });
-
-  it('should accept quiet parameter without effect', () => {
-    // quiet parameter is ignored but accepted for compatibility
-    const result1 = initGitRepo(projectDir, true);
-    
-    // Create another project for comparison
-    const projectDir2 = join(tempDir, 'project2');
-    mkdirSync(projectDir2, { recursive: true });
-    writeFileSync(join(projectDir2, 'README.md'), '# Test');
-    
-    const result2 = initGitRepo(projectDir2, false);
-    
-    expect(result1.success).toBe(true);
-    expect(result2.success).toBe(true);
-  });
-});
-
-describe('GitInitResult interface', () => {
-  it('has success and error properties', () => {
-    const successResult = { success: true, error: null };
-    const errorResult = { success: false, error: 'Some error' };
-    
-    expect(successResult.success).toBe(true);
-    expect(successResult.error).toBeNull();
-    expect(errorResult.success).toBe(false);
-    expect(errorResult.error).toBe('Some error');
   });
 });

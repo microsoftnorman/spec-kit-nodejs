@@ -10,7 +10,6 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync, copyFileSync } from 'fs';
 import { join, dirname, basename } from 'path';
 import { getFeaturePaths, type FeaturePaths } from '../lib/common.js';
-import { showBanner } from '../lib/ui/banner.js';
 
 /**
  * Options for update-agent-context command
@@ -593,9 +592,6 @@ export async function updateAgentContext(
   agentType?: string,
   _options?: UpdateAgentContextOptions
 ): Promise<void> {
-  // Show banner
-  showBanner();
-
   // Get feature paths
   const paths: FeaturePaths = getFeaturePaths();
 

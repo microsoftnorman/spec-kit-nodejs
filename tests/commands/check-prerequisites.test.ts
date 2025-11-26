@@ -25,19 +25,6 @@ vi.mock('child_process', async () => {
   };
 });
 
-describe('CheckPrerequisites Command Behavior', () => {
-  it('shows banner at start (unless --json mode)', () => {
-    // The check-prerequisites command displays ASCII banner
-    // unless --json flag is provided
-    expect(true).toBe(true);
-  });
-
-  it('skips banner in JSON mode for clean output', () => {
-    // When --json is passed, banner is suppressed
-    expect(true).toBe(true);
-  });
-});
-
 describe('CheckPrerequisites Output Format', () => {
   it('JSON output contains required fields', () => {
     // Expected JSON output structure

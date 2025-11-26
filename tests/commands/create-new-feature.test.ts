@@ -8,19 +8,6 @@ import { existsSync, mkdirSync, writeFileSync, rmSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 
-describe('CreateNewFeature Command Behavior', () => {
-  it('shows banner at start (unless --json mode)', () => {
-    // The create-new-feature command displays ASCII banner
-    // unless --json flag is provided
-    expect(true).toBe(true);
-  });
-
-  it('skips banner in JSON mode for clean output', () => {
-    // When --json is passed, banner is suppressed
-    expect(true).toBe(true);
-  });
-});
-
 describe('CreateNewFeature Branch Name Generation', () => {
   it('generates branch name with 3-digit prefix', () => {
     const branchName = '001-user-auth';

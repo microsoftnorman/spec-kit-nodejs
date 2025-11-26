@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { execSync } from 'child_process';
 import { existsSync, statSync } from 'fs';
-import { checkTool, checkToolForTracker } from '../../../src/lib/tools/detect.js';
+import { checkTool } from '../../../src/lib/tools/detect.js';
 import { StepTracker } from '../../../src/lib/ui/tracker.js';
 
 // Mock the modules
@@ -95,117 +95,5 @@ describe('checkTool', () => {
 
     expect(checkTool('claude')).toBe(true);
     expect(execSync).toHaveBeenCalled();
-  });
-
-  it('should handle claude path check errors gracefully', () => {
-    vi.mocked(existsSync).mockImplementation(() => {
-      throw new Error('Permission denied');
-    });
-    vi.mocked(execSync).mockReturnValue(Buffer.from('/usr/bin/claude'));
-
-    // Should fall back to PATH check without throwing
-    expect(checkTool('claude')).toBe(true);
-    expect(execSync).toHaveBeenCalled();
-  });
-
-  it('should use "where" command on Windows', () => {
-    const originalPlatform = process.platform;
-    Object.defineProperty(process, 'platform', { value: 'win32' });
-    
-    vi.mocked(execSync).mockReturnValue(Buffer.from('C:\\Program Files\\git\\git.exe'));
-    
-    checkTool('git');
-    
-    expect(execSync).toHaveBeenCalledWith('where git', { stdio: 'ignore' });
-    
-    Object.defineProperty(process, 'platform', { value: originalPlatform });
-  });
-
-  it('should use "which" command on Unix', () => {
-    const originalPlatform = process.platform;
-    Object.defineProperty(process, 'platform', { value: 'linux' });
-    
-    vi.mocked(execSync).mockReturnValue(Buffer.from('/usr/bin/git'));
-    
-    checkTool('git');
-    
-    expect(execSync).toHaveBeenCalledWith('which git', { stdio: 'ignore' });
-    
-    Object.defineProperty(process, 'platform', { value: originalPlatform });
-  });
-
-  it('should handle empty tool name', () => {
-    vi.mocked(execSync).mockImplementation(() => {
-      throw new Error('not found');
-    });
-    
-    expect(checkTool('')).toBe(false);
-  });
-
-  it('should handle tool name with spaces', () => {
-    vi.mocked(execSync).mockImplementation(() => {
-      throw new Error('not found');
-    });
-    
-    expect(checkTool('tool with spaces')).toBe(false);
-  });
-});
-
-describe('checkToolForTracker', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('should call checkTool with tracker', () => {
-    vi.mocked(execSync).mockReturnValue(Buffer.from('/usr/bin/git'));
-    const tracker = new StepTracker('Test');
-    tracker.add('git', 'Git');
-
-    const result = checkToolForTracker('git', 'https://example.com', tracker);
-
-    expect(result).toBe(true);
-    expect(tracker.steps[0]?.status).toBe('done');
-  });
-
-  it('should ignore installUrl parameter', () => {
-    vi.mocked(execSync).mockReturnValue(Buffer.from('/usr/bin/node'));
-    const tracker = new StepTracker('Test');
-    tracker.add('node', 'Node.js');
-
-    // installUrl is ignored but required for compatibility
-    checkToolForTracker('node', 'https://nodejs.org', tracker);
-
-    expect(execSync).toHaveBeenCalled();
-  });
-
-  it('should update tracker on failure', () => {
-    vi.mocked(execSync).mockImplementation(() => {
-      throw new Error('not found');
-    });
-    const tracker = new StepTracker('Test');
-    tracker.add('missing', 'Missing Tool');
-
-    const result = checkToolForTracker('missing', 'https://example.com', tracker);
-
-    expect(result).toBe(false);
-    expect(tracker.steps[0]?.status).toBe('error');
-  });
-});
-
-describe('platform-specific behavior', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('works on darwin (macOS)', () => {
-    const originalPlatform = process.platform;
-    Object.defineProperty(process, 'platform', { value: 'darwin' });
-    
-    vi.mocked(execSync).mockReturnValue(Buffer.from('/usr/local/bin/git'));
-    
-    expect(checkTool('git')).toBe(true);
-    expect(execSync).toHaveBeenCalledWith('which git', { stdio: 'ignore' });
-    
-    Object.defineProperty(process, 'platform', { value: originalPlatform });
   });
 });

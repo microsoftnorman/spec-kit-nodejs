@@ -1,4 +1,4 @@
-# Source files (dist is published instead)
+# Source files (dist is included)
 src/
 
 # Test files
@@ -6,34 +6,16 @@ tests/
 *.test.ts
 *.test.js
 vitest.config.ts
-coverage/
 
-# Config files (not needed at runtime)
+# Config files
 .eslintrc.json
 .prettierrc
 tsconfig.json
-.editorconfig
 
-# Development artifacts
+# Dev artifacts
+coverage/
 *.log
 .DS_Store
+
+# Build artifacts
 *.tsbuildinfo
-.vscode/
-
-# GitHub specific
-.github/
-
-# Documentation (README is included via files field)
-docs/
-AGENTS.md
-CONTRIBUTING.md
-CODE_OF_CONDUCT.md
-SECURITY.md
-SUPPORT.md
-spec-driven.md
-
-# Node.js subdirectory (legacy)
-nodejs/
-
-# Package lock (not needed for library consumers)
-package-lock.json
