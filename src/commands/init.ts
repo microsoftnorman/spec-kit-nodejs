@@ -14,7 +14,7 @@ import { selectWithArrows, getAIChoices, DEFAULT_AI_KEY } from '../lib/ui/select
 import { AGENT_CONFIG } from '../lib/config.js';
 import { checkTool } from '../lib/tools/detect.js';
 import { initGitRepo, isGitRepo } from '../lib/tools/git.js';
-import { generateBuiltinTemplates } from '../lib/template/builtin.js';
+import { generateBuiltinTemplates, type GenerateBuiltinResult } from '../lib/template/builtin.js';
 import { ExitCode } from '../lib/errors.js';
 import type { InitOptions } from '../types/index.js';
 
@@ -26,6 +26,47 @@ ${chalk.yellow('Security Notice:')}
 Agent configuration folders may contain sensitive prompts and instructions.
 Consider adding them to .gitignore if you don't want to share them.
 `;
+
+/**
+ * Display created files grouped by directory.
+ */
+function displayCreatedFiles(result: GenerateBuiltinResult): void {
+  console.log(chalk.cyan('Created Files:'));
+  
+  // Group files by directory
+  const filesByDir: Record<string, string[]> = {};
+  for (const file of result.files) {
+    const parts = file.split('/');
+    const fileName = parts.pop()!;
+    const dir = parts.join('/') || '.';
+    if (!filesByDir[dir]) {
+      filesByDir[dir] = [];
+    }
+    filesByDir[dir].push(fileName);
+  }
+  
+  // Display files grouped by directory
+  const dirs = Object.keys(filesByDir).sort();
+  for (let i = 0; i < dirs.length; i++) {
+    const dir = dirs[i]!;
+    const files = filesByDir[dir]!.sort();
+    const isLast = i === dirs.length - 1;
+    const prefix = isLast ? '└──' : '├──';
+    
+    console.log(`  ${prefix} ${chalk.blue(dir + '/')}`);
+    
+    for (let j = 0; j < files.length; j++) {
+      const file = files[j];
+      const fileIsLast = j === files.length - 1;
+      const indent = isLast ? '      ' : '│     ';
+      const filePrefix = fileIsLast ? '└──' : '├──';
+      console.log(`  ${indent}${filePrefix} ${chalk.dim(file)}`);
+    }
+  }
+  
+  console.log();
+  console.log(`  ${chalk.dim(`Total: ${result.files.length} files in ${result.directories.length} directories`)}`);
+}
 
 /**
  * Get next steps content based on configuration.
@@ -187,8 +228,9 @@ export async function init(
 
   // Generate built-in templates
   tracker.start('generate', 'creating project structure');
+  let generateResult: GenerateBuiltinResult;
   try {
-    await generateBuiltinTemplates(projectPath, {
+    generateResult = await generateBuiltinTemplates(projectPath, {
       ai: selectedAi,
       tracker,
       debug: options.debug,
@@ -221,6 +263,10 @@ export async function init(
   }
 
   console.log(tracker.render());
+  console.log();
+
+  // Display created files
+  displayCreatedFiles(generateResult);
   console.log();
 
   // Show security notice

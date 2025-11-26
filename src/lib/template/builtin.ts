@@ -157,16 +157,29 @@ export interface GenerateBuiltinOptions {
 }
 
 /**
+ * Result of template generation including list of created files.
+ */
+export interface GenerateBuiltinResult {
+  /** List of created files (relative to project root) */
+  files: string[];
+  /** List of created directories (relative to project root) */
+  directories: string[];
+}
+
+/**
  * Generate built-in templates for JavaScript script type.
  * 
  * @param projectPath - Path to the project directory
  * @param options - Generation options
+ * @returns Object containing lists of created files and directories
  */
 export async function generateBuiltinTemplates(
   projectPath: string,
   options: GenerateBuiltinOptions
-): Promise<void> {
+): Promise<GenerateBuiltinResult> {
   const { ai, tracker, debug } = options;
+  const createdFiles: string[] = [];
+  const createdDirs: string[] = [];
   
   let templatesDir: string;
   try {
@@ -187,13 +200,16 @@ export async function generateBuiltinTemplates(
   const memoryDir = join(projectPath, 'memory');
   const specsDir = join(projectPath, 'specs');
   const vscodeDir = join(projectPath, '.vscode');
-  const agentDir = join(projectPath, AGENT_DIRS[ai] || '.github/agents');
+  const agentDirRelative = AGENT_DIRS[ai] || '.github/agents';
+  const agentDir = join(projectPath, agentDirRelative);
 
   mkdirSync(specifyDir, { recursive: true });
   mkdirSync(memoryDir, { recursive: true });
   mkdirSync(specsDir, { recursive: true });
   mkdirSync(vscodeDir, { recursive: true });
   mkdirSync(agentDir, { recursive: true });
+
+  createdDirs.push('.specify/templates', 'memory', 'specs', '.vscode', agentDirRelative);
 
   // Copy or generate template files
   for (const file of TEMPLATE_FILES) {
@@ -204,6 +220,7 @@ export async function generateBuiltinTemplates(
       // Generate default content
       writeFileSync(destPath, getDefaultTemplateContent(file));
     }
+    createdFiles.push(`.specify/templates/${file}`);
   }
 
   // Copy or generate command files to agent directory
@@ -212,6 +229,7 @@ export async function generateBuiltinTemplates(
     const destPath = join(agentDir, file);
     if (commandsSourceDir && existsSync(join(commandsSourceDir, file))) {
       copyFileSync(join(commandsSourceDir, file), destPath);
+      createdFiles.push(`${agentDirRelative}/${file}`);
     }
   }
 
@@ -221,24 +239,32 @@ export async function generateBuiltinTemplates(
       join(agentDir, 'copilot-instructions.md'),
       generateCopilotInstructions()
     );
+    createdFiles.push(`${agentDirRelative}/copilot-instructions.md`);
   } else {
+    const rulesFile = `${ai}-rules.md`;
     writeFileSync(
-      join(agentDir, `${ai}-rules.md`),
+      join(agentDir, rulesFile),
       generateCopilotInstructions().replace('GitHub Copilot', AGENT_DIRS[ai] || ai)
     );
+    createdFiles.push(`${agentDirRelative}/${rulesFile}`);
   }
 
   // Generate constitution
   writeFileSync(join(memoryDir, 'constitution.md'), generateConstitution());
+  createdFiles.push('memory/constitution.md');
 
   // Generate VS Code settings
   const settingsPath = join(vscodeDir, 'settings.json');
   if (!existsSync(settingsPath)) {
     writeFileSync(settingsPath, generateVSCodeSettings());
+    createdFiles.push('.vscode/settings.json');
   }
 
   // Create .gitkeep in specs directory
   writeFileSync(join(specsDir, '.gitkeep'), '');
+  createdFiles.push('specs/.gitkeep');
+
+  return { files: createdFiles, directories: createdDirs };
 }
 
 /**
