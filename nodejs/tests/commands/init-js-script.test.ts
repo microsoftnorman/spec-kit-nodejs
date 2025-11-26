@@ -1,5 +1,5 @@
 /**
- * Functional tests for init command with --script js option.
+ * Functional tests for init command with option.
  * Tests the built-in template generation without network access.
  */
 
@@ -92,7 +92,7 @@ describe('Init Command with --script js', () => {
   describe('Basic functionality', () => {
     it('creates project with copilot and js script type', () => {
       const { stdout, exitCode } = runCli(
-        `init "${projectDir}" --ai copilot --script js --no-git --force`
+        `init "${projectDir}" --ai copilot --no-git --force`
       );
 
       expect(exitCode).toBe(0);
@@ -100,17 +100,9 @@ describe('Init Command with --script js', () => {
       expect(stdout).toContain('Project initialized successfully');
     });
 
-    it('shows correct script type in output', () => {
-      const { stdout } = runCli(
-        `init "${projectDir}" --ai copilot --script js --no-git --force`
-      );
-
-      expect(stdout).toContain('JavaScript/Node.js');
-    });
-
     it('shows "Generate templates" step instead of "Download template"', () => {
       const { stdout } = runCli(
-        `init "${projectDir}" --ai copilot --script js --no-git --force`
+        `init "${projectDir}" --ai copilot --no-git --force`
       );
 
       expect(stdout).toContain('Generate templates');
@@ -121,7 +113,7 @@ describe('Init Command with --script js', () => {
       // This test verifies js works without network by checking it completes quickly
       const startTime = Date.now();
       const { exitCode } = runCli(
-        `init "${projectDir}" --ai copilot --script js --no-git --force`
+        `init "${projectDir}" --ai copilot --no-git --force`
       );
       const duration = Date.now() - startTime;
 
@@ -133,7 +125,7 @@ describe('Init Command with --script js', () => {
 
   describe('Directory structure', () => {
     beforeEach(() => {
-      runCli(`init "${projectDir}" --ai copilot --script js --no-git --force`);
+      runCli(`init "${projectDir}" --ai copilot --no-git --force`);
     });
 
     it('creates .specify directory', () => {
@@ -163,7 +155,7 @@ describe('Init Command with --script js', () => {
 
   describe('Template files', () => {
     beforeEach(() => {
-      runCli(`init "${projectDir}" --ai copilot --script js --no-git --force`);
+      runCli(`init "${projectDir}" --ai copilot --no-git --force`);
     });
 
     it('creates spec-template.md', () => {
@@ -211,7 +203,7 @@ describe('Init Command with --script js', () => {
 
   describe('Command files for copilot', () => {
     beforeEach(() => {
-      runCli(`init "${projectDir}" --ai copilot --script js --no-git --force`);
+      runCli(`init "${projectDir}" --ai copilot --no-git --force`);
     });
 
     const commandFiles = [
@@ -245,7 +237,7 @@ describe('Init Command with --script js', () => {
 
   describe('Memory and constitution', () => {
     beforeEach(() => {
-      runCli(`init "${projectDir}" --ai copilot --script js --no-git --force`);
+      runCli(`init "${projectDir}" --ai copilot --no-git --force`);
     });
 
     it('creates constitution.md in memory directory', () => {
@@ -262,7 +254,7 @@ describe('Init Command with --script js', () => {
 
   describe('VS Code settings', () => {
     beforeEach(() => {
-      runCli(`init "${projectDir}" --ai copilot --script js --no-git --force`);
+      runCli(`init "${projectDir}" --ai copilot --no-git --force`);
     });
 
     it('creates settings.json', () => {
@@ -286,19 +278,19 @@ describe('Init Command with --script js', () => {
 
   describe('Git initialization', () => {
     it('initializes git by default', () => {
-      runCli(`init "${projectDir}" --ai copilot --script js --force`);
+      runCli(`init "${projectDir}" --ai copilot --force`);
 
       expect(existsSync(join(projectDir, '.git'))).toBe(true);
     });
 
     it('skips git with --no-git flag', () => {
-      runCli(`init "${projectDir}" --ai copilot --script js --no-git --force`);
+      runCli(`init "${projectDir}" --ai copilot --no-git --force`);
 
       expect(existsSync(join(projectDir, '.git'))).toBe(false);
     });
 
     it('shows git step in output when enabled', () => {
-      const { stdout } = runCli(`init "${projectDir}" --ai copilot --script js --force`);
+      const { stdout } = runCli(`init "${projectDir}" --ai copilot --force`);
 
       expect(stdout).toContain('Initialize git');
     });
@@ -312,7 +304,7 @@ describe('Init Command with --script js', () => {
         const testProjectDir = join(tempDir, `test-${ai}`);
 
         const { exitCode } = runCli(
-          `init "${testProjectDir}" --ai ${ai} --script js --no-git --force --ignore-agent-tools`
+          `init "${testProjectDir}" --ai ${ai} --no-git --force --ignore-agent-tools`
         );
 
         expect(exitCode).toBe(0);
@@ -325,7 +317,7 @@ describe('Init Command with --script js', () => {
   describe('Error handling', () => {
     it('fails gracefully with invalid AI assistant', () => {
       const { exitCode, stdout } = runCli(
-        `init "${projectDir}" --ai invalid-ai --script js --no-git --force`,
+        `init "${projectDir}" --ai invalid-ai --no-git --force`,
         { expectError: true }
       );
 
@@ -338,7 +330,7 @@ describe('Init Command with --script js', () => {
       writeFileSync(join(projectDir, 'existing.txt'), 'content');
 
       const { exitCode, stdout } = runCli(
-        `init "${projectDir}" --ai copilot --script js --no-git`,
+        `init "${projectDir}" --ai copilot --no-git`,
         { expectError: true }
       );
 
@@ -351,7 +343,7 @@ describe('Init Command with --script js', () => {
       writeFileSync(join(projectDir, 'existing.txt'), 'content');
 
       const { exitCode } = runCli(
-        `init "${projectDir}" --ai copilot --script js --no-git --force`
+        `init "${projectDir}" --ai copilot --no-git --force`
       );
 
       expect(exitCode).toBe(0);
@@ -361,7 +353,7 @@ describe('Init Command with --script js', () => {
   describe('Output messages', () => {
     it('shows banner', () => {
       const { stdout } = runCli(
-        `init "${projectDir}" --ai copilot --script js --no-git --force`
+        `init "${projectDir}" --ai copilot --no-git --force`
       );
 
       // Banner contains the Spec Kit tagline
@@ -370,17 +362,16 @@ describe('Init Command with --script js', () => {
 
     it('shows project configuration summary', () => {
       const { stdout } = runCli(
-        `init "${projectDir}" --ai copilot --script js --no-git --force`
+        `init "${projectDir}" --ai copilot --no-git --force`
       );
 
       expect(stdout).toContain('Project Configuration');
       expect(stdout).toContain('AI Assistant');
-      expect(stdout).toContain('Script Type');
     });
 
     it('shows security notice', () => {
       const { stdout } = runCli(
-        `init "${projectDir}" --ai copilot --script js --no-git --force`
+        `init "${projectDir}" --ai copilot --no-git --force`
       );
 
       expect(stdout).toContain('Security Notice');
@@ -388,7 +379,7 @@ describe('Init Command with --script js', () => {
 
     it('shows next steps panel', () => {
       const { stdout } = runCli(
-        `init "${projectDir}" --ai copilot --script js --no-git --force`
+        `init "${projectDir}" --ai copilot --no-git --force`
       );
 
       expect(stdout).toContain('Next Steps');
@@ -398,7 +389,7 @@ describe('Init Command with --script js', () => {
 
     it('shows success message', () => {
       const { stdout } = runCli(
-        `init "${projectDir}" --ai copilot --script js --no-git --force`
+        `init "${projectDir}" --ai copilot --no-git --force`
       );
 
       expect(stdout).toContain('Project initialized successfully');
@@ -407,7 +398,7 @@ describe('Init Command with --script js', () => {
 
   describe('Template content quality', () => {
     beforeEach(() => {
-      runCli(`init "${projectDir}" --ai copilot --script js --no-git --force`);
+      runCli(`init "${projectDir}" --ai copilot --no-git --force`);
     });
 
     it('spec-template.md has required sections', () => {
@@ -451,7 +442,7 @@ describe('Init Command with --script js', () => {
 
   describe('Integration with other commands', () => {
     beforeEach(() => {
-      runCli(`init "${projectDir}" --ai copilot --script js --force`);
+      runCli(`init "${projectDir}" --ai copilot --force`);
     });
 
     it('create-new-feature works after init', () => {
@@ -485,7 +476,7 @@ describe('Init Command with --script js', () => {
   });
 });
 
-describe('Init with --script js (only option)', () => {
+describe('Init with (only option)', () => {
   let tempDir: string;
 
   beforeEach(() => {
@@ -500,7 +491,7 @@ describe('Init with --script js (only option)', () => {
     const jsDir = join(tempDir, 'js-project');
 
     // Create with js (built-in)
-    runCli(`init "${jsDir}" --ai copilot --script js --no-git --force`);
+    runCli(`init "${jsDir}" --ai copilot --no-git --force`);
 
     // Should have same core directories
     expect(existsSync(join(jsDir, '.specify'))).toBe(true);
@@ -513,7 +504,7 @@ describe('Init with --script js (only option)', () => {
     const jsDir = join(tempDir, 'js-project');
 
     // This should work even with no network
-    const { exitCode } = runCli(`init "${jsDir}" --ai copilot --script js --no-git --force`);
+    const { exitCode } = runCli(`init "${jsDir}" --ai copilot --no-git --force`);
 
     expect(exitCode).toBe(0);
     expect(existsSync(join(jsDir, '.specify', 'templates', 'spec-template.md'))).toBe(true);

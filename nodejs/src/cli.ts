@@ -41,7 +41,6 @@ program
   .command('init [project-name]')
   .description('Initialize a new Specify project from the latest template')
   .option('--ai <assistant>', 'AI assistant to use: claude, gemini, copilot, cursor-agent, qwen, opencode, codex, windsurf, kilocode, auggie, codebuddy, roo, q, amp, or shai')
-  .option('--script <type>', 'Script type: js (default)')
   .option('--ignore-agent-tools', 'Skip checks for AI agent CLI tools')
   .option('--no-git', 'Skip git repository initialization')
   .option('--here', 'Initialize in current directory')

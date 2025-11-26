@@ -1099,7 +1099,7 @@ describe('E2E: Init Command Validation', () => {
     writeFileSync(join(projectDir, 'existing.txt'), 'content');
 
     const { stderr, stdout, exitCode } = runCli(
-      `init "${projectDir}" --ai copilot --script sh`,
+      `init "${projectDir}" --ai copilot`,
       { expectError: true }
     );
 

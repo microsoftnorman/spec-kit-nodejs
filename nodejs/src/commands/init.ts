@@ -10,13 +10,11 @@ import chalk from 'chalk';
 import { showBanner } from '../lib/ui/banner.js';
 import { StepTracker } from '../lib/ui/tracker.js';
 import { panel } from '../lib/ui/console.js';
-import { selectWithArrows, getAIChoices, getScriptChoices, DEFAULT_AI_KEY, getDefaultScriptKey } from '../lib/ui/select.js';
-import { AGENT_CONFIG, SCRIPT_TYPE_CHOICES, getDefaultScriptType } from '../lib/config.js';
+import { selectWithArrows, getAIChoices, DEFAULT_AI_KEY } from '../lib/ui/select.js';
+import { AGENT_CONFIG } from '../lib/config.js';
 import { checkTool } from '../lib/tools/detect.js';
 import { initGitRepo, isGitRepo } from '../lib/tools/git.js';
-import { downloadTemplate } from '../lib/template/download.js';
-import { extractTemplate } from '../lib/template/extract.js';
-import { generateBuiltinTemplates, shouldUseBuiltinTemplates } from '../lib/template/builtin.js';
+import { generateBuiltinTemplates } from '../lib/template/builtin.js';
 import { ExitCode } from '../lib/errors.js';
 import type { InitOptions } from '../types/index.js';
 
@@ -168,50 +166,12 @@ export async function init(
     }
   }
 
-  // Determine script type
-  let scriptType: string = options.script || '';
-  if (!scriptType) {
-    // Interactive selection if TTY is available
-    if (process.stdin.isTTY && process.stdout.isTTY) {
-      try {
-        console.log();
-        scriptType = await selectWithArrows(
-          getScriptChoices(),
-          'Select script type:',
-          getDefaultScriptKey()
-        );
-      } catch (error) {
-        if (error instanceof Error && error.message.includes('KeyboardInterrupt')) {
-          console.log('\n' + chalk.yellow('Selection cancelled.'));
-          process.exit(ExitCode.USER_CANCELLED);
-        }
-        throw error;
-      }
-    } else {
-      // Non-interactive: default based on OS
-      scriptType = getDefaultScriptType();
-    }
-  }
-
-  // Validate script type
-  if (!SCRIPT_TYPE_CHOICES[scriptType]) {
-    console.log(chalk.red('Error:') + ` Unknown script type '${scriptType}'.`);
-    console.log('Valid options: ' + Object.keys(SCRIPT_TYPE_CHOICES).join(', '));
-    process.exit(ExitCode.INVALID_ARGUMENT);
-  }
-
   // Initialize step tracker
   const tracker = new StepTracker(`Initialize ${projectName}`);
 
-  // Use built-in templates for js (only option now)
-  const useBuiltin = shouldUseBuiltinTemplates(scriptType);
+  // Always use built-in templates (js is the only option)
+  tracker.add('generate', 'Generate templates');
   
-  if (useBuiltin) {
-    tracker.add('generate', 'Generate templates');
-  } else {
-    tracker.add('download', 'Download template');
-    tracker.add('extract', 'Extract files');
-  }
   // Commander.js sets git to false when --no-git is passed
   const shouldInitGit = options.git !== false;
   if (shouldInitGit) {
@@ -223,80 +183,26 @@ export async function init(
   console.log(`  Name: ${chalk.green(projectName)}`);
   console.log(`  Path: ${chalk.green(projectPath)}`);
   console.log(`  AI Assistant: ${chalk.green(agentConfig.name)}`);
-  console.log(`  Script Type: ${chalk.green(SCRIPT_TYPE_CHOICES[scriptType])}`);
   console.log();
 
-  if (useBuiltin) {
-    // Generate built-in templates for js
-    tracker.start('generate', 'creating project structure');
-    try {
-      await generateBuiltinTemplates(projectPath, {
-        ai: selectedAi,
-        tracker,
-        debug: options.debug,
-      });
-      tracker.complete('generate', 'done');
-    } catch (error) {
-      tracker.error('generate', String(error instanceof Error ? error.message : error));
-      console.log(tracker.render());
-      console.log();
-      console.log(chalk.red('Error:') + ' Failed to generate templates.');
-      if (options.debug) {
-        console.log(chalk.dim(String(error)));
-      }
-      process.exit(ExitCode.FILE_SYSTEM_ERROR);
+  // Generate built-in templates
+  tracker.start('generate', 'creating project structure');
+  try {
+    await generateBuiltinTemplates(projectPath, {
+      ai: selectedAi,
+      tracker,
+      debug: options.debug,
+    });
+    tracker.complete('generate', 'done');
+  } catch (error) {
+    tracker.error('generate', String(error instanceof Error ? error.message : error));
+    console.log(tracker.render());
+    console.log();
+    console.log(chalk.red('Error:') + ' Failed to generate templates.');
+    if (options.debug) {
+      console.log(chalk.dim(String(error)));
     }
-  } else {
-    // Download template from GitHub
-    tracker.start('download', 'fetching from GitHub');
-    let zipPath: string;
-    try {
-      const tempDir = join(tmpdir(), 'specify-cli');
-      if (!existsSync(tempDir)) {
-        mkdirSync(tempDir, { recursive: true });
-      }
-      
-      const result = await downloadTemplate(selectedAi, scriptType, tempDir, {
-        githubToken: options.githubToken,
-        debug: options.debug,
-      });
-      zipPath = result.zipPath;
-      
-      tracker.complete('download', `v${result.metadata.release}`);
-    } catch (error) {
-      tracker.error('download', String(error instanceof Error ? error.message : error));
-      console.log(tracker.render());
-      console.log();
-      console.log(chalk.red('Error:') + ' Failed to download template from GitHub.');
-      if (options.debug) {
-        console.log(chalk.dim(String(error)));
-      }
-      console.log('');
-      console.log('Troubleshooting:');
-      console.log('  • Check your internet connection');
-      console.log('  • Use --github-token <token> for higher rate limits');
-      console.log('  • Set GH_TOKEN or GITHUB_TOKEN environment variable');
-      process.exit(ExitCode.NETWORK_ERROR);
-    }
-
-    // Extract files
-    tracker.start('extract', 'extracting to project');
-    try {
-      await extractTemplate(zipPath, projectPath, {
-        here: inCurrentDir,
-        tracker,
-      });
-      tracker.complete('extract', 'done');
-    } catch (error) {
-      tracker.error('extract', String(error instanceof Error ? error.message : error));
-      console.log(tracker.render());
-      console.log();
-      console.log(chalk.red('Error:') + ' Failed to extract template.');
-      if (options.debug) {
-        console.log(chalk.dim(String(error)));
-      }
-      process.exit(ExitCode.FILE_SYSTEM_ERROR);
-    }
+    process.exit(ExitCode.FILE_SYSTEM_ERROR);
   }
 
   // Initialize git repository

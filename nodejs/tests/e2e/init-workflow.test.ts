@@ -154,7 +154,7 @@ describe('E2E: specify init command validation', () => {
     it('fails with invalid AI assistant name', () => {
       expect(() => {
         execSync(
-          `node "${CLI_PATH}" init "${projectDir}" --ai invalid-ai --script js --no-git`,
+          `node "${CLI_PATH}" init "${projectDir}" --ai invalid-ai --no-git`,
           {
             encoding: 'utf-8',
             cwd: PROJECT_ROOT,
@@ -186,7 +186,7 @@ describe('E2E: specify init command validation', () => {
 
       expect(() => {
         execSync(
-          `node "${CLI_PATH}" init "${projectDir}" --ai copilot --script js --no-git`,
+          `node "${CLI_PATH}" init "${projectDir}" --ai copilot --no-git`,
           {
             encoding: 'utf-8',
             cwd: PROJECT_ROOT,
@@ -217,7 +217,7 @@ describe('E2E: specify init command validation', () => {
       let result: string;
       try {
         result = execSync(
-          `node "${CLI_PATH}" init "${projectDir}" --ai copilot --script js --no-git --force`,
+          `node "${CLI_PATH}" init "${projectDir}" --ai copilot --no-git --force`,
           {
             encoding: 'utf-8',
             cwd: PROJECT_ROOT,
@@ -231,14 +231,13 @@ describe('E2E: specify init command validation', () => {
 
       expect(result).toContain('Project Configuration');
       expect(result).toContain('GitHub Copilot');
-      expect(result).toContain('JavaScript/Node.js');
     }, 120000);
 
     it('shows step tracker in output', async () => {
       let result: string;
       try {
         result = execSync(
-          `node "${CLI_PATH}" init "${projectDir}" --ai copilot --script js --no-git --force`,
+          `node "${CLI_PATH}" init "${projectDir}" --ai copilot --no-git --force`,
           {
             encoding: 'utf-8',
             cwd: PROJECT_ROOT,
@@ -778,7 +777,7 @@ describe('E2E: Network-dependent tests (with js script)', () => {
   describe.skipIf(!isNetworkAvailable() || !hasGitHubToken)('Full init with template download', () => {
     it('creates project with copilot and js script type', async () => {
       const result = execSync(
-        `node "${CLI_PATH}" init "${projectDir}" --ai copilot --script js --no-git --force`,
+        `node "${CLI_PATH}" init "${projectDir}" --ai copilot --no-git --force`,
         {
           encoding: 'utf-8',
           cwd: PROJECT_ROOT,
@@ -792,7 +791,7 @@ describe('E2E: Network-dependent tests (with js script)', () => {
 
     it('creates .github directory for copilot agent', async () => {
       execSync(
-        `node "${CLI_PATH}" init "${projectDir}" --ai copilot --script js --no-git --force`,
+        `node "${CLI_PATH}" init "${projectDir}" --ai copilot --no-git --force`,
         {
           encoding: 'utf-8',
           cwd: PROJECT_ROOT,
@@ -806,7 +805,7 @@ describe('E2E: Network-dependent tests (with js script)', () => {
 
     it('creates .specify directory with templates', async () => {
       execSync(
-        `node "${CLI_PATH}" init "${projectDir}" --ai copilot --script js --no-git --force`,
+        `node "${CLI_PATH}" init "${projectDir}" --ai copilot --no-git --force`,
         {
           encoding: 'utf-8',
           cwd: PROJECT_ROOT,
@@ -823,7 +822,7 @@ describe('E2E: Network-dependent tests (with js script)', () => {
 
     it('shows next steps panel', async () => {
       const result = execSync(
-        `node "${CLI_PATH}" init "${projectDir}" --ai copilot --script js --no-git --force`,
+        `node "${CLI_PATH}" init "${projectDir}" --ai copilot --no-git --force`,
         {
           encoding: 'utf-8',
           cwd: PROJECT_ROOT,
@@ -879,7 +878,7 @@ describe('E2E: Complete Spec-Driven Development Workflow', () => {
       // Step 1: Initialize the project with Copilot and js scripts
       // Using --force to bypass non-empty directory check if temp already has files
       const initResult = execSync(
-        `node "${CLI_PATH}" init "${projectDir}" --ai copilot --script js --force`,
+        `node "${CLI_PATH}" init "${projectDir}" --ai copilot --force`,
         {
           encoding: 'utf-8',
           cwd: PROJECT_ROOT,
@@ -1067,7 +1066,7 @@ The architecture follows a clean separation between authentication logic and HTT
 
       // Run init with --force
       const result = execSync(
-        `node "${CLI_PATH}" init "${projectDir}" --ai copilot --script js --no-git --force`,
+        `node "${CLI_PATH}" init "${projectDir}" --ai copilot --no-git --force`,
         {
           encoding: 'utf-8',
           cwd: PROJECT_ROOT,
@@ -1083,7 +1082,7 @@ The architecture follows a clean separation between authentication logic and HTT
     it('creates feature and then another feature with correct numbering', async () => {
       // Initialize project
       execSync(
-        `node "${CLI_PATH}" init "${projectDir}" --ai copilot --script js --force`,
+        `node "${CLI_PATH}" init "${projectDir}" --ai copilot --force`,
         {
           encoding: 'utf-8',
           cwd: PROJECT_ROOT,

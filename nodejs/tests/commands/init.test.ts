@@ -21,11 +21,6 @@ describe('Init Command Arguments', () => {
     expect(validAgents).toContain('claude');
   });
 
-  it('--script option specifies script type', () => {
-    const validTypes = Object.keys(SCRIPT_TYPE_CHOICES);
-    expect(validTypes).toEqual(['js']);
-  });
-
   it('--ignore-agent-tools flag exists', () => {
     const flag = '--ignore-agent-tools';
     expect(flag).toBe('--ignore-agent-tools');
