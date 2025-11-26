@@ -106,7 +106,7 @@ describe('Select With Arrows Defaults', () => {
     if (platform() === 'win32') {
       expect(defaultKey).toBe('ps');
     } else {
-      expect(defaultKey).toBe('sh');
+      expect(defaultKey).toBe('js');
     }
   });
 });
@@ -126,15 +126,14 @@ describe('Select With Arrows Used For', () => {
 
   it('script selection uses SCRIPT_TYPE_CHOICES', () => {
     const scriptChoices = getScriptChoices();
-    expect(Object.keys(scriptChoices)).toHaveLength(3);
-    expect(scriptChoices['sh']).toBe('POSIX Shell (bash/zsh)');
+    expect(Object.keys(scriptChoices)).toHaveLength(2);
     expect(scriptChoices['ps']).toBe('PowerShell');
     expect(scriptChoices['js']).toBe('JavaScript/Node.js (built-in)');
   });
 
   it('script selection default depends on OS', () => {
     const defaultScript = getDefaultScriptKey();
-    expect(['sh', 'ps']).toContain(defaultScript);
+    expect(['ps', 'js']).toContain(defaultScript);
     expect(SCRIPT_TYPE_CHOICES[defaultScript]).toBeDefined();
   });
 });
@@ -151,7 +150,7 @@ describe('Select Options Structure', () => {
 
   it('script choices are complete', () => {
     const scriptChoices = getScriptChoices();
-    expect(scriptChoices['sh']).toBe('POSIX Shell (bash/zsh)');
     expect(scriptChoices['ps']).toBe('PowerShell');
+    expect(scriptChoices['js']).toBe('JavaScript/Node.js (built-in)');
   });
 });

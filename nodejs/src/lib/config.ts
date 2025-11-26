@@ -119,21 +119,20 @@ export const AGENT_CONFIG: Record<string, AgentConfig> = {
 
 /**
  * Script type choices with descriptions.
- * 'sh' and 'ps' download templates from GitHub releases.
+ * 'ps' downloads templates from GitHub releases.
  * 'js' uses built-in templates (no download required).
  */
 export const SCRIPT_TYPE_CHOICES: Record<string, string> = {
-  sh: 'POSIX Shell (bash/zsh)',
   ps: 'PowerShell',
   js: 'JavaScript/Node.js (built-in)',
 };
 
 /**
  * Get the default script type based on the current platform.
- * Windows defaults to PowerShell, others default to POSIX Shell.
+ * Windows defaults to PowerShell, others default to js (built-in).
  */
-export function getDefaultScriptType(): 'sh' | 'ps' {
-  return process.platform === 'win32' ? 'ps' : 'sh';
+export function getDefaultScriptType(): 'ps' | 'js' {
+  return process.platform === 'win32' ? 'ps' : 'js';
 }
 
 /**

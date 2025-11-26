@@ -16,7 +16,6 @@ import { checkTool } from '../lib/tools/detect.js';
 import { initGitRepo, isGitRepo } from '../lib/tools/git.js';
 import { downloadTemplate } from '../lib/template/download.js';
 import { extractTemplate } from '../lib/template/extract.js';
-import { ensureExecutableScripts } from '../lib/template/permissions.js';
 import { generateBuiltinTemplates, shouldUseBuiltinTemplates } from '../lib/template/builtin.js';
 import { ExitCode } from '../lib/errors.js';
 import type { InitOptions } from '../types/index.js';
@@ -204,7 +203,7 @@ export async function init(
   // Initialize step tracker
   const tracker = new StepTracker(`Initialize ${projectName}`);
 
-  // Use built-in templates for js, download for sh/ps
+  // Use built-in templates for js, download for ps
   const useBuiltin = shouldUseBuiltinTemplates(scriptType);
   
   if (useBuiltin) {
@@ -212,9 +211,6 @@ export async function init(
   } else {
     tracker.add('download', 'Download template');
     tracker.add('extract', 'Extract files');
-  }
-  if (process.platform !== 'win32' && scriptType === 'sh') {
-    tracker.add('chmod', 'Set script permissions');
   }
   // Commander.js sets git to false when --no-git is passed
   const shouldInitGit = options.git !== false;
@@ -300,18 +296,6 @@ export async function init(
         console.log(chalk.dim(String(error)));
       }
       process.exit(ExitCode.FILE_SYSTEM_ERROR);
-    }
-  }
-
-  // Set script permissions (Unix only)
-  if (process.platform !== 'win32' && scriptType === 'sh') {
-    try {
-      ensureExecutableScripts(projectPath, tracker);
-    } catch (error) {
-      // Non-fatal error, just log it
-      if (options.debug) {
-        console.log(chalk.dim(`Permission error: ${error}`));
-      }
     }
   }
 

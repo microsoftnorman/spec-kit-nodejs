@@ -145,49 +145,49 @@ describe('GitHub Client', () => {
       html_url: 'https://github.com/github/spec-kit/releases/tag/v0.0.22',
       assets: [
         {
-          name: 'spec-kit-template-copilot-sh-0.0.22.zip',
-          size: 100000,
-          browser_download_url: 'https://example.com/copilot-sh.zip',
-          content_type: 'application/zip',
-        },
-        {
           name: 'spec-kit-template-copilot-ps-0.0.22.zip',
-          size: 100001,
+          size: 100000,
           browser_download_url: 'https://example.com/copilot-ps.zip',
           content_type: 'application/zip',
         },
         {
-          name: 'spec-kit-template-claude-sh-0.0.22.zip',
+          name: 'spec-kit-template-copilot-js-0.0.22.zip',
+          size: 100001,
+          browser_download_url: 'https://example.com/copilot-js.zip',
+          content_type: 'application/zip',
+        },
+        {
+          name: 'spec-kit-template-claude-ps-0.0.22.zip',
           size: 100002,
-          browser_download_url: 'https://example.com/claude-sh.zip',
+          browser_download_url: 'https://example.com/claude-ps.zip',
           content_type: 'application/zip',
         },
       ],
     };
 
     it('should find matching asset for ai and script type', () => {
-      const asset = findTemplateAsset(release, 'copilot', 'sh');
-      
-      expect(asset).not.toBeNull();
-      expect(asset?.name).toBe('spec-kit-template-copilot-sh-0.0.22.zip');
-    });
-
-    it('should find PowerShell variant', () => {
       const asset = findTemplateAsset(release, 'copilot', 'ps');
       
       expect(asset).not.toBeNull();
       expect(asset?.name).toBe('spec-kit-template-copilot-ps-0.0.22.zip');
     });
 
-    it('should find different AI assistant', () => {
-      const asset = findTemplateAsset(release, 'claude', 'sh');
+    it('should find JavaScript variant', () => {
+      const asset = findTemplateAsset(release, 'copilot', 'js');
       
       expect(asset).not.toBeNull();
-      expect(asset?.name).toBe('spec-kit-template-claude-sh-0.0.22.zip');
+      expect(asset?.name).toBe('spec-kit-template-copilot-js-0.0.22.zip');
+    });
+
+    it('should find different AI assistant', () => {
+      const asset = findTemplateAsset(release, 'claude', 'ps');
+      
+      expect(asset).not.toBeNull();
+      expect(asset?.name).toBe('spec-kit-template-claude-ps-0.0.22.zip');
     });
 
     it('should return null for non-existent combination', () => {
-      const asset = findTemplateAsset(release, 'nonexistent', 'sh');
+      const asset = findTemplateAsset(release, 'nonexistent', 'ps');
       
       expect(asset).toBeNull();
     });
@@ -198,7 +198,7 @@ describe('GitHub Client', () => {
         assets: [],
       };
       
-      const asset = findTemplateAsset(emptyRelease, 'copilot', 'sh');
+      const asset = findTemplateAsset(emptyRelease, 'copilot', 'ps');
       
       expect(asset).toBeNull();
     });

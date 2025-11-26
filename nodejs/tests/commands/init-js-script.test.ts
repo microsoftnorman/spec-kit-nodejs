@@ -485,7 +485,7 @@ describe('Init Command with --script js', () => {
   });
 });
 
-describe('Init with --script js vs --script sh/ps', () => {
+describe('Init with --script js vs --script ps', () => {
   let tempDir: string;
 
   beforeEach(() => {
@@ -496,14 +496,13 @@ describe('Init with --script js vs --script sh/ps', () => {
     cleanupTempDir(tempDir);
   });
 
-  it('js and sh create similar directory structures', () => {
+  it('js and ps create similar directory structures', () => {
     const jsDir = join(tempDir, 'js-project');
-    const shDir = join(tempDir, 'sh-project');
 
     // Create with js (built-in)
     runCli(`init "${jsDir}" --ai copilot --script js --no-git --force`);
 
-    // Both should have same core directories
+    // Should have same core directories
     expect(existsSync(join(jsDir, '.specify'))).toBe(true);
     expect(existsSync(join(jsDir, 'memory'))).toBe(true);
     expect(existsSync(join(jsDir, 'specs'))).toBe(true);
